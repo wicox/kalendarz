@@ -68,11 +68,11 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         {/* Table Header */}
         <thead>
           <tr className="border-b border-slate-300 bg-slate-800 text-white">
-            <th className="sticky left-0 z-30 w-44 min-w-44 bg-slate-800 px-2 py-2 text-left font-sans text-xs font-bold tracking-tight">
+            <th className="sticky left-0 z-30 w-52 min-w-52 bg-slate-800 px-2.5 py-2 text-left font-sans text-xs font-bold tracking-tight">
               Imię i Nazwisko
             </th>
             <th
-              className={`sticky left-44 z-30 w-16 min-w-16 bg-slate-700 px-1 py-2 font-sans text-[11px] font-semibold text-slate-200 ${
+              className={`sticky left-52 z-30 w-16 min-w-16 bg-slate-700 px-1 py-2 font-sans text-[11px] font-semibold text-slate-200 ${
                 printSettings?.showVacation !== false ? '' : 'print:hidden'
               }`}
               title="Dostępny urlop: Dni pozostałe (Zaległy / Bieżący)"
@@ -185,14 +185,14 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                 className="border-b border-slate-200 hover:bg-slate-50/80 transition-colors"
               >
                 {/* Worker Identity & Contract Tag */}
-                <td className="sticky left-0 z-20 border-r border-slate-200 bg-white px-2 py-1.5 text-left font-sans font-medium text-slate-900 shadow-xs">
+                <td className="sticky left-0 z-20 border-r border-slate-200 bg-white px-2.5 py-1.5 text-left font-sans font-medium text-slate-900 shadow-xs">
                   <div className="flex flex-col">
-                    {/* Imię i Nazwisko (z możliwością ukrycia nazwiska w opcjach wydruku) */}
+                    {/* Imię i Nazwisko (wyraźna, większa czcionka) */}
                     <div
-                      className="truncate text-xs font-bold text-slate-800"
+                      className="worker-name-display truncate text-sm sm:text-[14.5px] font-extrabold text-slate-900 tracking-tight leading-snug"
                       title={`${worker.name} (Dośw: ${worker.experience}/10, Noc: ${worker.nightPref}%)`}
                     >
-                      <span>{fName}</span>
+                      <span className="font-extrabold">{fName}</span>
                       <span className={printSettings?.showLastName !== false ? '' : 'print:hidden'}>
                         {lName ? ` ${lName}` : ''}
                       </span>
@@ -200,7 +200,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
                     {/* Doświadczenie i nocki (z możliwością ukrycia w wydruku) */}
                     <div
-                      className={`flex items-center gap-1.5 text-[10px] text-slate-400 ${
+                      className={`flex items-center gap-1.5 text-[10px] text-slate-500 font-medium ${
                         printSettings?.showExperience !== false ? '' : 'print:hidden'
                       }`}
                     >
@@ -236,7 +236,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
                 {/* Vacation Balance */}
                 <td
-                  className={`sticky left-44 z-20 border-r border-slate-200 bg-slate-50 px-1 py-1 text-center font-sans text-[10px] font-bold text-slate-700 ${
+                  className={`sticky left-52 z-20 border-r border-slate-200 bg-slate-50 px-1 py-1 text-center font-sans text-[10px] font-bold text-slate-700 ${
                     printSettings?.showVacation !== false ? '' : 'print:hidden'
                   }`}
                   title={`Pozostało łącznie: ${vacBal.total} dni urlopu (${vacBal.oldVac} zaległego + ${vacBal.newVac} bieżącego)`}
@@ -324,14 +324,14 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                           </div>
                         )}
 
-                        {/* ZMIANA NOCNA (N) */}
+                        {/* ZMIANA NOCNA (N) - Pastelowy, lekko ciemniejszy od dnia (D), idealny do wydruku */}
                         {parsed.code === 'N' && (
-                          <div className="flex h-full w-full flex-col items-center justify-center rounded border border-slate-900 bg-slate-800 text-amber-300 shadow-2xs py-0.5">
-                            <span className="text-xs font-black text-amber-400 leading-none">N</span>
-                            <span className="font-mono text-[9px] font-bold text-amber-200/90 leading-tight mt-0.5">
+                          <div className="flex h-full w-full flex-col items-center justify-center rounded border border-indigo-200 bg-indigo-100/90 text-indigo-950 shadow-2xs py-0.5">
+                            <span className="text-xs font-black text-indigo-950 leading-none">N</span>
+                            <span className="font-mono text-[9px] font-bold text-indigo-900 leading-tight mt-0.5">
                               {parsed.startTime || '18:00'}
                             </span>
-                            <span className="font-mono text-[9px] font-bold text-amber-200/90 leading-tight">
+                            <span className="font-mono text-[9px] font-bold text-indigo-900 leading-tight">
                               {parsed.endTime || '06:00'}
                             </span>
                           </div>
@@ -487,7 +487,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
               </span>
             </td>
             <td
-              className={`sticky left-44 z-20 border-r border-slate-200 bg-slate-200 ${
+              className={`sticky left-52 z-20 border-r border-slate-200 bg-slate-200 ${
                 printSettings?.showVacation !== false ? '' : 'print:hidden'
               }`}
             ></td>
@@ -606,6 +606,20 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 sm:px-6 no-print">
         <div className="flex flex-wrap items-center gap-4">
           <span className="font-bold text-slate-800">Oznaczenia:</span>
+
+          <div className="flex items-center gap-1.5">
+            <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 font-bold text-blue-900 text-[10px]">
+              D
+            </span>
+            <span>Dzień (12h)</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="rounded border border-indigo-200 bg-indigo-100 px-1.5 py-0.5 font-bold text-indigo-950 text-[10px]">
+              N
+            </span>
+            <span>Noc (12h)</span>
+          </div>
 
           <div className="flex items-center gap-1.5">
             <span className="flex items-center gap-1 rounded bg-emerald-500 px-1.5 py-0.5 font-bold text-white text-[10px]">

@@ -212,7 +212,7 @@ export function exportScheduleToExcelHtml(
 }
 
 /**
- * Eksport do samodzielnego, eleganckiego pliku HTML
+ * Eksport do samodzielnego, eleganckiego pliku HTML z opcjami widoczności kolumn i wydruku
  */
 export function exportScheduleToStandaloneHtml(
   workers: Worker[],
@@ -239,33 +239,107 @@ export function exportScheduleToStandaloneHtml(
     .title { text-align: center; }
     .title h1 { margin: 0; font-size: 18px; text-transform: uppercase; color: #1e293b; }
     .title h2 { margin: 2px 0; font-size: 14px; color: #e30613; }
-    .norm-bar { background: #e2e8f0; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    
+    /* Pasek kontrolny opcji wydruku (tylko na ekranie) */
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 10px 16px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      font-size: 12px;
+    }
+    .controls-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+    }
+    .controls-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      color: #334155;
+    }
+    .btn-print {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #e30613;
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.15s;
+    }
+    .btn-print:hover {
+      background: #b90510;
+    }
+
+    /* Ukrywanie kolumn wg przełączników */
+    .hide-contract .col-contract { display: none !important; }
+    .hide-vacation .col-vacation { display: none !important; }
+    .hide-dh .col-dh { display: none !important; }
+    .hide-nh .col-nh { display: none !important; }
+    .hide-sum .col-sum { display: none !important; }
+    .hide-shifts .col-shifts { display: none !important; }
+
     table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    th, td { border: 1px solid #cbd5e1; height: 36px; padding: 2px; }
+    th, td { border: 1px solid #cbd5e1; height: 38px; padding: 2px; }
     th { background: #1e293b; color: #fff; font-size: 10px; }
     .weekend { background: #d97706 !important; color: #fff; }
     .trading { background: #7e22ce !important; color: #fff; }
-    .worker-col { text-align: left; font-weight: bold; padding-left: 6px; width: 140px; }
-    .shift-d { background: #dbeafe; color: #1e40af; font-weight: bold; border-radius: 3px; padding: 2px; }
-    .shift-n { background: #0f172a; color: #fde047; font-weight: bold; border-radius: 3px; padding: 2px; }
-    .shift-p { background: #d1fae5; color: #065f46; font-weight: bold; border-radius: 3px; padding: 2px; }
+    .worker-col { text-align: left; font-weight: 800; font-size: 12px; padding-left: 8px; width: 160px; }
+    .shift-d { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-weight: bold; border-radius: 3px; padding: 2px; }
+    .shift-n { background: #e0e7ff; color: #1e1b4b; border: 1px solid #c7d2fe; font-weight: bold; border-radius: 3px; padding: 2px; }
+    .shift-p { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; font-weight: bold; border-radius: 3px; padding: 2px; }
     .shift-u { background: #10b981; color: #fff; font-weight: bold; border-radius: 3px; padding: 2px; }
-    .shift-w { background: #fef3c7; color: #92400e; font-weight: bold; border-radius: 3px; padding: 2px; }
+    .shift-w { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: bold; border-radius: 3px; padding: 2px; }
     .status-ok { background: #dcfce7; color: #166534; font-weight: bold; }
     .status-bad { background: #fee2e2; color: #991b1b; font-weight: bold; }
+    
     @media print {
       @page { size: A4 landscape; margin: 0.3cm; }
       body { margin: 0; background: #fff; }
+      .controls-bar { display: none !important; }
+      table { box-shadow: none !important; }
+      th, td { height: 32pt !important; }
     }
   </style>
 </head>
 <body>
+  <!-- Pasek opcji widoczności i wydruku -->
+  <div class="controls-bar">
+    <div class="controls-group">
+      <span style="font-weight: bold; color: #0f172a;">Widoczność kolumn do wydruku:</span>
+      <label><input type="checkbox" id="chk-contract" checked onchange="toggleCol('contract', this.checked)"> Umowa</label>
+      <label><input type="checkbox" id="chk-vacation" checked onchange="toggleCol('vacation', this.checked)"> Urlop</label>
+      <label><input type="checkbox" id="chk-dh" checked onchange="toggleCol('dh', this.checked)"> D (h)</label>
+      <label><input type="checkbox" id="chk-nh" checked onchange="toggleCol('nh', this.checked)"> N (h)</label>
+      <label><input type="checkbox" id="chk-sum" checked onchange="toggleCol('sum', this.checked)"> Suma</label>
+      <label><input type="checkbox" id="chk-shifts" checked onchange="toggleCol('shifts', this.checked)"> Zmiany</label>
+    </div>
+    <button type="button" class="btn-print" onclick="window.print()">
+      🖨️ Drukuj grafik (A4 Poziomo)
+    </button>
+  </div>
+
   <div class="header">
     <div class="brand">ORLEN</div>
     <div class="title">
       <h1>Grafik Pracy 24/7</h1>
       <h2>${monthName}</h2>
-      <div class="norm-bar">Norma: ${norm.hours}h | Norma pracownika: ${norm.requiredShiftsCeil} zmian (+${norm.overtimeHours}h nadgodz.) | Suma stacji: ${norm.totalStationHours}h</div>
     </div>
     <div style="width: 100px;"></div>
   </div>
@@ -273,9 +347,9 @@ export function exportScheduleToStandaloneHtml(
   <table>
     <thead>
       <tr>
-        <th class="worker-col">Pracownik</th>
-        <th style="width: 50px;">Umowa</th>
-        <th style="width: 50px;">Urlop</th>
+        <th class="worker-col">Imię i Nazwisko</th>
+        <th class="col-contract" style="width: 50px;">Umowa</th>
+        <th class="col-vacation" style="width: 50px;">Urlop</th>
 `;
 
   for (let day = 1; day <= daysInMonth; day++) {
@@ -292,10 +366,10 @@ export function exportScheduleToStandaloneHtml(
   }
 
   html += `
-        <th>D</th>
-        <th>N</th>
-        <th>Suma</th>
-        <th>Zmiany</th>
+        <th class="col-dh">D</th>
+        <th class="col-nh">N</th>
+        <th class="col-sum">Suma</th>
+        <th class="col-shifts">Zmiany</th>
       </tr>
     </thead>
     <tbody>
@@ -309,8 +383,8 @@ export function exportScheduleToStandaloneHtml(
 
     html += `<tr>
       <td class="worker-col">${worker.name}</td>
-      <td>${worker.contractType === 'uop' ? 'UoP' : 'UZ'}${worker.isPodjazd ? ' (P)' : ''}</td>
-      <td>${worker.oldVacation + worker.newVacation}d</td>
+      <td class="col-contract">${worker.contractType === 'uop' ? 'UoP' : 'UZ'}${worker.isPodjazd ? ' (P)' : ''}</td>
+      <td class="col-vacation">${worker.oldVacation + worker.newVacation}d</td>
     `;
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -348,15 +422,17 @@ export function exportScheduleToStandaloneHtml(
     }
 
     html += `
-      <td>${dH}h</td>
-      <td>${nH}h</td>
-      <td style="font-weight:bold;">${totalHours}h</td>
-      <td style="font-weight:bold;">${sc}</td>
+      <td class="col-dh">${dH}h</td>
+      <td class="col-nh">${nH}h</td>
+      <td class="col-sum" style="font-weight:bold;">${totalHours}h</td>
+      <td class="col-shifts" style="font-weight:bold;">${sc}</td>
     </tr>`;
   });
 
   html += `</tbody><tfoot><tr>
-    <td class="worker-col" colspan="3">Suma stacji (D/N bez podjazdu)</td>
+    <td class="worker-col">Suma stacji (D/N bez podjazdu)</td>
+    <td class="col-contract"></td>
+    <td class="col-vacation"></td>
   `;
 
   for (let day = 1; day <= daysInMonth; day++) {
@@ -373,11 +449,22 @@ export function exportScheduleToStandaloneHtml(
   }
 
   html += `
-    <td></td>
-    <td></td>
-    <td style="font-weight:bold; background-color:${grandMainHours === norm.totalStationHours ? '#dcfce7' : '#fee2e2'};">${grandMainHours}h</td>
-    <td style="font-weight:bold;">${grandMainShifts}</td>
-  </tr></tfoot></table></body></html>`;
+    <td class="col-dh"></td>
+    <td class="col-nh"></td>
+    <td class="col-sum" style="font-weight:bold; background-color:${grandMainHours === norm.totalStationHours ? '#dcfce7' : '#fee2e2'};">${grandMainHours}h</td>
+    <td class="col-shifts" style="font-weight:bold;">${grandMainShifts}</td>
+  </tr></tfoot></table>
+
+  <script>
+    function toggleCol(colName, isVisible) {
+      if (isVisible) {
+        document.body.classList.remove('hide-' + colName);
+      } else {
+        document.body.classList.add('hide-' + colName);
+      }
+    }
+  </script>
+</body></html>`;
 
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -387,6 +474,7 @@ export function exportScheduleToStandaloneHtml(
   a.click();
   URL.revokeObjectURL(url);
 }
+
 
 export const exportScheduleToExcel = exportScheduleToExcelHtml;
 export const exportScheduleToHtml = exportScheduleToStandaloneHtml;

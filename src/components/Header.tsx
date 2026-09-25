@@ -110,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Quick Primary Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 no-print">
           <button
             onClick={onOpenAutoFill}
             className="flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-slate-950 shadow-xs hover:bg-amber-400 active:bg-amber-600 transition-colors cursor-pointer"
@@ -132,7 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="mx-auto flex max-w-(--breakpoint-2xl) items-center gap-1 px-4 sm:px-6">
+      <div className="mx-auto flex max-w-(--breakpoint-2xl) items-center gap-1 px-4 sm:px-6 no-print">
         <button
           onClick={() => onTabChange('schedule')}
           className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${

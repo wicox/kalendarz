@@ -84,6 +84,12 @@
     vertical-align: middle !important;
   }
 
+  .worker-name-display {
+    font-size: 10pt !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+  }
+
   .sticky {
     position: static !important;
   }
