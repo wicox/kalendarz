@@ -26,11 +26,11 @@
   background: #94a3b8;
 }
 
-/* Print Stylesheet for A4 Landscape */
+/* Print Stylesheet for A4 Landscape - zoptymalizowany pod kątem pełnych godzin */
 @media print {
   @page {
     size: A4 landscape;
-    margin: 0.35cm;
+    margin: 0.3cm;
   }
   
   html, body {
@@ -38,7 +38,7 @@
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
-    font-size: 8.5pt !important;
+    font-size: 7.5pt !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -71,10 +71,17 @@
   }
 
   th, td {
-    height: 28px !important;
     padding: 0 !important;
-    font-size: 8pt !important;
     border: 1px solid #94a3b8 !important;
+  }
+
+  /* Zapewnienie pełnej widoczności godzin w wydruku */
+  td.shift-cell {
+    height: 36pt !important;
+    min-height: 36pt !important;
+    max-height: 36pt !important;
+    font-size: 7pt !important;
+    vertical-align: middle !important;
   }
 
   .sticky {

@@ -8,10 +8,8 @@ import {
   Sliders,
   Scale,
   Users,
-  Check,
   CheckCircle2,
   AlertTriangle,
-  Info,
 } from 'lucide-react';
 import { Worker, ContractType } from '../types/schedule';
 import { getDaysInMonth, calculateWorkNorm } from '../utils/calendar';
@@ -41,7 +39,8 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
   onBalanceNorms,
   onClose,
 }) => {
-  const [newName, setNewName] = useState('');
+  const [newFirstName, setNewFirstName] = useState('');
+  const [newLastName, setNewLastName] = useState('');
   const [newContractType, setNewContractType] = useState<ContractType>('uop');
   const [newOldVac, setNewOldVac] = useState(0);
   const [newNewVac, setNewNewVac] = useState(26);
@@ -74,22 +73,28 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) return;
+    const fName = newFirstName.trim();
+    const lName = newLastName.trim();
+    if (!fName) return;
+
+    const fullName = lName ? `${fName} ${lName}` : fName;
 
     onAddWorker({
       id: `w-${Date.now()}`,
-      name: newName.trim(),
+      name: fullName,
+      firstName: fName,
+      lastName: lName,
       contractType: newContractType,
       oldVacation: Number(newOldVac) || 0,
-      newVacation: Number(newNewVac) || 26,
-      nightPref: Number(newNightPref) || 50,
-      experience: Number(newExp) || 5,
-      maxShifts: Number(newShifts) || norm.requiredShiftsCeil,
+      newVacation: Number(newNewVac) || 0,
+      nightPref: Number(newNightPref) || 0,
+      experience: Math.min(10, Math.max(1, Number(newExp) || 1)),
+      maxShifts: Number(newShifts) || 0,
       isPodjazd: newIsPodjazd,
     });
 
-    setNewName('');
-    setNewContractType('uop');
+    setNewFirstName('');
+    setNewLastName('');
     setNewOldVac(0);
     setNewNewVac(26);
     setNewNightPref(50);
@@ -99,20 +104,20 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-2xs overflow-y-auto">
-      <div className="my-6 w-full max-w-5xl rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-3 sm:p-5 backdrop-blur-2xs">
+      <div className="flex max-h-[92vh] w-full max-w-5xl flex-col rounded-2xl bg-white p-5 shadow-2xl border border-slate-200">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-600">
               <Users className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900">
-                Ustawienia Pracowników, Umów i Norm Czasu Pracy
+                Ustawienia Pracowników i Kalkulator Normy
               </h2>
               <p className="text-xs text-slate-500">
-                Kalkulacja zmian na stacji: {daysInMonth} dni × 48h = {norm.totalStationHours} godzin ({norm.totalStationShifts} zmian)
+                Zarządzaj zespołem, typem umowy (UoP/UZ), wymiarem zmian i uprawnieniami do podjazdu
               </p>
             </div>
           </div>
@@ -124,9 +129,9 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
           </button>
         </div>
 
-        {/* Dynamic Calculation Banner: Norms & Overtime & Total hours */}
+        {/* Informacje o Normie i Pokryciu */}
         <div className="my-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {/* Box 1: Norma miesięczna pracownika */}
+          {/* Box 1: Norma Miesięczna */}
           <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3">
             <div className="text-[11px] font-semibold text-blue-800">
               Norma Miesięczna (Kodeks Pracy)
@@ -141,7 +146,7 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
             </div>
           </div>
 
-          {/* Box 2: Suma zmian i godzin zespołu */}
+          {/* Box 2: Suma zmian i godzin zespołu - DYNAMICZNIE DLA DANEGO MIESIĄCA */}
           <div
             className={`rounded-xl border p-3 transition-colors ${
               isPerfectStationMatch
@@ -159,7 +164,7 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
             <div className="mt-1 text-[11px] font-bold">
               {isPerfectStationMatch ? (
                 <span className="inline-flex items-center gap-1 text-emerald-700">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Pokrycie idealne (1440h / 120 zmian)
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Pokrycie idealne ({norm.totalStationHours}h / {norm.totalStationShifts} zmian)
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-amber-800">
@@ -188,7 +193,7 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
               type="button"
               onClick={onBalanceNorms}
               className="flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-950 hover:bg-amber-200 transition-colors cursor-pointer"
-              title="Wyrównaj sumę zmian do dokładnych 1440 godzin"
+              title={`Wyrównaj sumę zmian do dokładnych ${norm.totalStationHours} godzin`}
             >
               <Scale className="h-3.5 w-3.5 text-amber-800" />
               <span>Wyrównaj sumę do {norm.totalStationHours}h ({norm.totalStationShifts} zm.)</span>
@@ -235,6 +240,9 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
                 const shiftHours = (w.maxShifts || 0) * (w.isPodjazd ? 8 : 12);
                 const isUoP = w.contractType === 'uop';
 
+                const fName = w.firstName !== undefined ? w.firstName : (w.name ? w.name.split(' ')[0] : '');
+                const lName = w.lastName !== undefined ? w.lastName : (w.name ? w.name.split(' ').slice(1).join(' ') : '');
+
                 return (
                   <tr key={w.id || index} className="hover:bg-slate-50/80 transition-colors">
                     {/* Position reordering */}
@@ -259,14 +267,32 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
                       </div>
                     </td>
 
-                    {/* Name */}
+                    {/* Name: Imię i Nazwisko podzielone na dwa osobne pola */}
                     <td className="px-3 py-1.5">
-                      <input
-                        type="text"
-                        value={w.name}
-                        onChange={(e) => onUpdateWorker(index, { ...w, name: e.target.value })}
-                        className="w-full rounded border border-transparent px-1.5 py-1 font-semibold text-slate-900 hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:outline-hidden"
-                      />
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          placeholder="Imię"
+                          value={fName}
+                          onChange={(e) => {
+                            const newF = e.target.value;
+                            const full = lName ? `${newF} ${lName}` : newF;
+                            onUpdateWorker(index, { ...w, firstName: newF, lastName: lName, name: full });
+                          }}
+                          className="w-1/2 rounded border border-slate-200 px-2 py-1 font-semibold text-slate-900 hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:outline-hidden text-xs"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Nazwisko"
+                          value={lName}
+                          onChange={(e) => {
+                            const newL = e.target.value;
+                            const full = newL ? `${fName} ${newL}` : fName;
+                            onUpdateWorker(index, { ...w, firstName: fName, lastName: newL, name: full });
+                          }}
+                          className="w-1/2 rounded border border-slate-200 px-2 py-1 font-semibold text-slate-900 hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:outline-hidden text-xs"
+                        />
+                      </div>
                     </td>
 
                     {/* Contract Type (Umowa o pracę / Umowa zlecenie) */}
@@ -298,9 +324,12 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
                         max={40}
                         value={w.oldVacation || 0}
                         onChange={(e) =>
-                          onUpdateWorker(index, { ...w, oldVacation: Number(e.target.value) || 0 })
+                          onUpdateWorker(index, {
+                            ...w,
+                            oldVacation: Math.max(0, parseInt(e.target.value) || 0),
+                          })
                         }
-                        className="w-12 rounded border border-slate-200 px-1 py-1 text-center font-mono text-xs focus:border-blue-500 focus:outline-hidden"
+                        className="w-12 rounded border border-slate-200 px-1 py-1 text-center font-mono text-xs text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-hidden"
                       />
                     </td>
 
@@ -312,80 +341,91 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
                         max={40}
                         value={w.newVacation !== undefined ? w.newVacation : 26}
                         onChange={(e) =>
-                          onUpdateWorker(index, { ...w, newVacation: Number(e.target.value) || 0 })
+                          onUpdateWorker(index, {
+                            ...w,
+                            newVacation: Math.max(0, parseInt(e.target.value) || 0),
+                          })
                         }
-                        className="w-12 rounded border border-slate-200 px-1 py-1 text-center font-mono text-xs focus:border-blue-500 focus:outline-hidden"
+                        className="w-12 rounded border border-slate-200 px-1 py-1 text-center font-mono text-xs text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-hidden"
                       />
                     </td>
 
-                    {/* Night Preference */}
+                    {/* Night Shift Preference */}
                     <td className="px-2 py-1.5 text-center">
-                      <div className="flex items-center justify-center gap-0.5 font-mono text-xs">
+                      <div className="flex items-center justify-center gap-1">
                         <input
                           type="number"
                           min={0}
                           max={100}
-                          value={w.nightPref !== undefined ? w.nightPref : 50}
+                          step={10}
+                          value={w.nightPref}
                           onChange={(e) =>
                             onUpdateWorker(index, {
                               ...w,
-                              nightPref: Math.min(100, Math.max(0, Number(e.target.value) || 0)),
+                              nightPref: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)),
                             })
                           }
-                          className="w-11 rounded border border-slate-200 px-1 py-1 text-center focus:border-blue-500 focus:outline-hidden"
+                          className="w-12 rounded border border-slate-200 px-1 py-1 text-center font-mono text-xs text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-hidden"
                         />
-                        <span className="text-[10px] text-slate-400">%</span>
+                        <span className="text-slate-400 text-[10px]">%</span>
                       </div>
                     </td>
 
-                    {/* Experience */}
+                    {/* Experience Level */}
                     <td className="px-2 py-1.5 text-center">
                       <input
                         type="number"
                         min={1}
                         max={10}
-                        value={w.experience !== undefined ? w.experience : 5}
+                        value={w.experience}
                         onChange={(e) =>
                           onUpdateWorker(index, {
                             ...w,
-                            experience: Math.min(10, Math.max(1, Number(e.target.value) || 5)),
+                            experience: Math.min(10, Math.max(1, parseInt(e.target.value) || 1)),
                           })
                         }
-                        className="w-10 rounded border border-slate-200 px-1 py-1 text-center font-bold text-slate-800 focus:border-blue-500 focus:outline-hidden"
+                        className="w-12 rounded border border-slate-200 px-1 py-1 text-center font-mono text-xs text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-hidden font-bold"
                       />
                     </td>
 
-                    {/* Monthly Shift Target */}
+                    {/* Target shifts count */}
                     <td className="px-2 py-1.5 text-center">
                       <input
                         type="number"
                         min={0}
                         max={31}
-                        value={w.maxShifts !== undefined ? w.maxShifts : norm.requiredShiftsCeil}
+                        value={w.maxShifts || 0}
                         onChange={(e) =>
-                          onUpdateWorker(index, { ...w, maxShifts: Number(e.target.value) || 0 })
+                          onUpdateWorker(index, {
+                            ...w,
+                            maxShifts: Math.max(0, parseInt(e.target.value) || 0),
+                          })
                         }
-                        className="w-14 rounded border border-slate-300 bg-white px-1 py-1 text-center font-mono font-black text-slate-900 focus:border-blue-500 focus:outline-hidden"
+                        className="w-14 rounded border border-slate-200 px-1 py-1 text-center font-mono text-xs font-bold text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-hidden"
                       />
                     </td>
 
-                    {/* Calculated hours */}
-                    <td className="px-2 py-1.5 text-center font-mono font-bold text-slate-700 bg-slate-50/50">
+                    {/* Calculated hours from shifts */}
+                    <td className="px-2 py-1.5 text-center font-mono text-xs font-semibold text-slate-600">
                       {shiftHours}h
                     </td>
 
-                    {/* Podjazd checkbox */}
+                    {/* Is Podjazd */}
                     <td className="px-2 py-1.5 text-center">
                       <input
                         type="checkbox"
                         checked={Boolean(w.isPodjazd)}
-                        onChange={(e) => onUpdateWorker(index, { ...w, isPodjazd: e.target.checked })}
-                        className="h-4 w-4 rounded border-slate-300 text-emerald-600 accent-emerald-600 cursor-pointer"
-                        title="Zaznacz, jeśli pracownik obsługuje wyłącznie podjazd (nie liczy się do sumy stacji 1440h)"
+                        onChange={(e) =>
+                          onUpdateWorker(index, {
+                            ...w,
+                            isPodjazd: e.target.checked,
+                          })
+                        }
+                        className="h-4 w-4 cursor-pointer rounded border-slate-300 text-emerald-600 accent-emerald-600"
                       />
                     </td>
 
-                    {/* Remove Worker */}
+                    {/* Delete Action */}
                     <td className="px-2 py-1.5 text-center">
                       <button
                         type="button"
@@ -410,13 +450,22 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
         >
           <div className="mb-2 text-xs font-bold text-slate-800">Dodaj nowego pracownika:</div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-9 items-center">
-            <div className="sm:col-span-2">
+            <div>
               <input
                 type="text"
                 required
-                placeholder="Imię i Nazwisko"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Imię"
+                value={newFirstName}
+                onChange={(e) => setNewFirstName(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden"
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Nazwisko"
+                value={newLastName}
+                onChange={(e) => setNewLastName(e.target.value)}
                 className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-blue-500 focus:outline-hidden"
               />
             </div>
@@ -495,22 +544,22 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
             </div>
 
             <div className="flex items-center justify-between gap-1">
-              <label className="flex items-center gap-1 text-[11px] text-slate-600 font-medium">
+              <label className="flex items-center gap-1 text-[11px] text-slate-600 font-medium cursor-pointer">
                 <input
                   type="checkbox"
                   checked={newIsPodjazd}
                   onChange={(e) => setNewIsPodjazd(e.target.checked)}
-                  className="rounded border-slate-300 text-emerald-600"
+                  className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 accent-emerald-600"
                 />
-                <span>Podjazd</span>
+                Podjazd
               </label>
 
               <button
                 type="submit"
-                className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-colors cursor-pointer"
+                className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 active:bg-red-800 transition-colors shadow-2xs cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>Dodaj</span>
+                Dodaj
               </button>
             </div>
           </div>
@@ -518,25 +567,23 @@ export const WorkerManagerModal: React.FC<WorkerManagerModalProps> = ({
 
         {/* Footer */}
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-          <div className="text-xs text-slate-500">
-            {isPerfectStationMatch ? (
-              <span className="text-emerald-700 font-bold">
-                ✓ Suma zespołu: {totalAssignedHours}h / {norm.totalStationHours}h (zgodna z wymogiem miesiąca)
-              </span>
-            ) : (
-              <span className="text-amber-700 font-bold">
-                ⚠ Suma godzin zespołu wynosi {totalAssignedHours}h (wymagane {norm.totalStationHours}h).
-              </span>
-            )}
+          <div className="flex items-center gap-4 text-xs text-slate-500">
+            <div>
+              Łącznie pracowników: <strong className="text-slate-800">{workers.length}</strong> (stacja:{' '}
+              {mainWorkers.length}, podjazd: {workers.length - mainWorkers.length})
+            </div>
+            <div>
+              Godziny zaplanowane:{' '}
+              <strong className="text-slate-800">{totalAssignedHours + podjazdHours}h</strong>
+            </div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer"
           >
-            <Check className="h-3.5 w-3.5" />
-            <span>Zatwierdź i Zamknij</span>
+            Gotowe
           </button>
         </div>
       </div>

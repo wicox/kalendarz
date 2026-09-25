@@ -1,6 +1,6 @@
 import React from 'react';
-import { Clock, CheckCircle2 } from 'lucide-react';
-import { Worker } from '../types/schedule';
+import { Clock, CheckCircle2, Palmtree, Coffee } from 'lucide-react';
+import { Worker, PrintSettings } from '../types/schedule';
 import {
   formatDateKey,
   getDaysInMonth,
@@ -19,6 +19,7 @@ interface ScheduleGridProps {
   workers: Worker[];
   scheduleData: Record<string, string>;
   tradingSundays: Record<string, boolean>;
+  printSettings?: PrintSettings;
   onSaveShift: (workerName: string, dateStr: string, value: string) => void;
   onOpenTimeModal: (workerName: string, dateStr: string) => void;
   onToggleTradingSunday: (dateStr: string) => void;
@@ -29,6 +30,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   workers,
   scheduleData,
   tradingSundays,
+  printSettings,
   onSaveShift,
   onOpenTimeModal,
   onToggleTradingSunday,
@@ -67,10 +69,12 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
         <thead>
           <tr className="border-b border-slate-300 bg-slate-800 text-white">
             <th className="sticky left-0 z-30 w-44 min-w-44 bg-slate-800 px-2 py-2 text-left font-sans text-xs font-bold tracking-tight">
-              Pracownik / Umowa
+              Imię i Nazwisko
             </th>
             <th
-              className="sticky left-44 z-30 w-16 min-w-16 bg-slate-700 px-1 py-2 font-sans text-[11px] font-semibold text-slate-200"
+              className={`sticky left-44 z-30 w-16 min-w-16 bg-slate-700 px-1 py-2 font-sans text-[11px] font-semibold text-slate-200 ${
+                printSettings?.showVacation !== false ? '' : 'print:hidden'
+              }`}
               title="Dostępny urlop: Dni pozostałe (Zaległy / Bieżący)"
             >
               Urlop
@@ -131,17 +135,31 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
             })}
 
             {/* Summary Columns */}
-            <th className="w-10 min-w-10 bg-slate-700 px-1 py-1 font-sans text-[10px] font-semibold text-slate-200">
+            <th
+              className={`w-10 min-w-10 bg-slate-700 px-1 py-1 font-sans text-[10px] font-semibold text-slate-200 ${
+                printSettings?.showDayHours !== false ? '' : 'print:hidden'
+              }`}
+            >
               D (h)
             </th>
-            <th className="w-10 min-w-10 bg-slate-700 px-1 py-1 font-sans text-[10px] font-semibold text-slate-200">
+            <th
+              className={`w-10 min-w-10 bg-slate-700 px-1 py-1 font-sans text-[10px] font-semibold text-slate-200 ${
+                printSettings?.showNightHours !== false ? '' : 'print:hidden'
+              }`}
+            >
               N (h)
             </th>
-            <th className="w-14 min-w-14 bg-slate-700 px-1 py-1 font-sans text-[10px] font-bold text-slate-100">
+            <th
+              className={`w-14 min-w-14 bg-slate-700 px-1 py-1 font-sans text-[10px] font-bold text-slate-100 ${
+                printSettings?.showTotalHours !== false ? '' : 'print:hidden'
+              }`}
+            >
               Suma h
             </th>
             <th
-              className="w-11 min-w-11 bg-slate-900 px-1 py-1 font-sans text-[10px] font-bold text-amber-400"
+              className={`w-11 min-w-11 bg-slate-900 px-1 py-1 font-sans text-[10px] font-bold text-amber-400 ${
+                printSettings?.showShiftsCount !== false ? '' : 'print:hidden'
+              }`}
               title="Liczba wykonanych zmian w miesiącu"
             >
               Zmiany
@@ -158,29 +176,52 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
             let shiftCount = 0;
 
             const isUoP = worker.contractType === 'uop';
+            const fName = worker.firstName !== undefined ? worker.firstName : (worker.name ? worker.name.split(' ')[0] : '');
+            const lName = worker.lastName !== undefined ? worker.lastName : (worker.name ? worker.name.split(' ').slice(1).join(' ') : '');
 
             return (
               <tr
-                key={worker.name}
+                key={worker.id || worker.name}
                 className="border-b border-slate-200 hover:bg-slate-50/80 transition-colors"
               >
                 {/* Worker Identity & Contract Tag */}
-                <td className="sticky left-0 z-20 border-r border-slate-200 bg-white px-2 py-1 text-left font-sans font-medium text-slate-900 shadow-xs">
-                  <div className="flex items-center justify-between gap-1">
-                    <span
+                <td className="sticky left-0 z-20 border-r border-slate-200 bg-white px-2 py-1.5 text-left font-sans font-medium text-slate-900 shadow-xs">
+                  <div className="flex flex-col">
+                    {/* Imię i Nazwisko (z możliwością ukrycia nazwiska w opcjach wydruku) */}
+                    <div
                       className="truncate text-xs font-bold text-slate-800"
                       title={`${worker.name} (Dośw: ${worker.experience}/10, Noc: ${worker.nightPref}%)`}
                     >
-                      {worker.name}
-                    </span>
-                    <div className="flex items-center gap-1 shrink-0">
+                      <span>{fName}</span>
+                      <span className={printSettings?.showLastName !== false ? '' : 'print:hidden'}>
+                        {lName ? ` ${lName}` : ''}
+                      </span>
+                    </div>
+
+                    {/* Doświadczenie i nocki (z możliwością ukrycia w wydruku) */}
+                    <div
+                      className={`flex items-center gap-1.5 text-[10px] text-slate-400 ${
+                        printSettings?.showExperience !== false ? '' : 'print:hidden'
+                      }`}
+                    >
+                      <span>dośw. {worker.experience}</span>
+                      <span>·</span>
+                      <span>noc {worker.nightPref}%</span>
+                    </div>
+
+                    {/* Skrót typu umowy pod spodem pod dośw. i nocki */}
+                    <div
+                      className={`mt-0.5 flex items-center gap-1 ${
+                        printSettings?.showContractType !== false ? '' : 'print:hidden'
+                      }`}
+                    >
                       {worker.isPodjazd ? (
                         <span className="rounded bg-emerald-100 px-1 py-0.2 text-[9px] font-bold text-emerald-800">
                           Podjazd
                         </span>
                       ) : (
                         <span
-                          className={`rounded px-1 py-0.2 text-[9px] font-bold ${
+                          className={`rounded px-1.5 py-0.2 text-[9px] font-bold ${
                             isUoP
                               ? 'bg-blue-100 text-blue-800'
                               : 'bg-slate-100 text-slate-700'
@@ -191,16 +232,13 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                    <span>dośw. {worker.experience}</span>
-                    <span>·</span>
-                    <span>noc {worker.nightPref}%</span>
-                  </div>
                 </td>
 
                 {/* Vacation Balance */}
                 <td
-                  className="sticky left-44 z-20 border-r border-slate-200 bg-slate-50 px-1 py-1 text-center font-sans text-[10px] font-bold text-slate-700"
+                  className={`sticky left-44 z-20 border-r border-slate-200 bg-slate-50 px-1 py-1 text-center font-sans text-[10px] font-bold text-slate-700 ${
+                    printSettings?.showVacation !== false ? '' : 'print:hidden'
+                  }`}
                   title={`Pozostało łącznie: ${vacBal.total} dni urlopu (${vacBal.oldVac} zaległego + ${vacBal.newVac} bieżącego)`}
                 >
                   <div className="text-slate-800">{vacBal.total}d</div>
@@ -209,7 +247,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                   </div>
                 </td>
 
-                {/* Day Cells */}
+                {/* Day Cells (Wydłużone komórki w pionie - min-h-[58px] - bez obcinania godzin!) */}
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const day = i + 1;
                   const dateStr = formatDateKey(year, month, day);
@@ -239,55 +277,107 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                     cellBg = 'bg-amber-50/40';
                   }
 
-                  // Styl odznaki zmiany
-                  let badgeStyle = 'text-slate-700 font-bold';
-                  let containerBg = '';
-                  if (parsed.code === 'D') {
-                    containerBg = 'bg-blue-50 text-blue-900 border border-blue-200';
-                  } else if (parsed.code === 'N') {
-                    containerBg = 'bg-slate-800 text-amber-300 border border-slate-900';
-                  } else if (parsed.code === 'P') {
-                    containerBg = 'bg-emerald-50 text-emerald-900 border border-emerald-200';
-                  } else if (parsed.code === 'U') {
-                    containerBg = 'bg-emerald-500 text-white font-black';
-                  } else if (parsed.code === '*') {
-                    containerBg = 'bg-amber-100 text-amber-900 border border-amber-300';
-                  }
-
                   const partners = getPartnersOnShift(dateStr, worker.name, parsed.code);
 
                   return (
                     <td
                       key={day}
-                      className={`relative border-r border-b border-slate-200 p-0 text-center transition-colors group ${cellBg}`}
+                      onClick={() => onOpenTimeModal(worker.name, dateStr)}
+                      className={`shift-cell relative border-r border-b border-slate-200 p-0 text-center transition-colors group cursor-pointer hover:ring-2 hover:ring-blue-400 hover:z-10 ${cellBg}`}
                       title={
                         parsed.code
                           ? `${worker.name} - ${day}.${month + 1}: ${parsed.code} (${parsed.hours}h)${
                               partners.length > 0 ? ` | Partner: ${partners.join(', ')}` : ''
                             }`
-                          : undefined
+                          : 'Kliknij, aby wybrać zmianę'
                       }
                     >
-                      <div className="relative flex h-9.5 w-full items-center justify-center p-0.5">
-                        <textarea
-                          rows={2}
-                          value={val}
-                          onChange={(e) => onSaveShift(worker.name, dateStr, e.target.value)}
-                          className={`h-full w-full resize-none rounded border-none bg-transparent p-0 text-center font-mono text-[10px] leading-tight focus:bg-white focus:outline-2 focus:outline-blue-500 ${badgeStyle} ${
-                            containerBg ? `p-0.5 shadow-2xs ${containerBg}` : ''
-                          }`}
-                          spellCheck={false}
-                        />
+                      <div className="relative flex h-[58px] min-h-[58px] w-full flex-col items-center justify-center p-0.5 select-none">
+                        {/* URLOP - Ikonka palmy */}
+                        {parsed.code === 'U' && (
+                          <div className="flex h-full w-full flex-col items-center justify-center rounded bg-emerald-500 text-white shadow-2xs">
+                            <Palmtree className="h-4 w-4 text-emerald-100" />
+                            <span className="text-[10px] font-black tracking-wider leading-none mt-0.5">U</span>
+                            <span className="text-[7.5px] font-bold text-emerald-100 opacity-90 leading-none">URLOP</span>
+                          </div>
+                        )}
 
-                        {/* Quick Clock Trigger Button */}
-                        <button
-                          type="button"
-                          onClick={() => onOpenTimeModal(worker.name, dateStr)}
-                          className="no-print absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded bg-white/90 text-slate-400 opacity-0 shadow-2xs hover:text-blue-600 group-hover:opacity-100 transition-opacity cursor-pointer"
-                          title="Zmień status / godziny zmiany"
-                        >
+                        {/* DZIEŃ WOLNY - Ikonka filiżanki */}
+                        {parsed.code === '*' && (
+                          <div className="flex h-full w-full flex-col items-center justify-center rounded border border-amber-300 bg-amber-100 text-amber-950 shadow-2xs">
+                            <Coffee className="h-4 w-4 text-amber-800" />
+                            <span className="text-[9px] font-black text-amber-900 leading-none mt-0.5">*</span>
+                            <span className="text-[7.5px] font-bold text-amber-800 opacity-90 leading-none">WOLNE</span>
+                          </div>
+                        )}
+
+                        {/* ZMIANA DZIENNA (D) */}
+                        {parsed.code === 'D' && (
+                          <div className="flex h-full w-full flex-col items-center justify-center rounded border border-blue-200 bg-blue-50 text-blue-900 shadow-2xs py-0.5">
+                            <span className="text-xs font-black text-blue-800 leading-none">D</span>
+                            <span className="font-mono text-[9px] font-bold text-blue-600 leading-tight mt-0.5">
+                              {parsed.startTime || '06:00'}
+                            </span>
+                            <span className="font-mono text-[9px] font-bold text-blue-600 leading-tight">
+                              {parsed.endTime || '18:00'}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* ZMIANA NOCNA (N) */}
+                        {parsed.code === 'N' && (
+                          <div className="flex h-full w-full flex-col items-center justify-center rounded border border-slate-900 bg-slate-800 text-amber-300 shadow-2xs py-0.5">
+                            <span className="text-xs font-black text-amber-400 leading-none">N</span>
+                            <span className="font-mono text-[9px] font-bold text-amber-200/90 leading-tight mt-0.5">
+                              {parsed.startTime || '18:00'}
+                            </span>
+                            <span className="font-mono text-[9px] font-bold text-amber-200/90 leading-tight">
+                              {parsed.endTime || '06:00'}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* PODJAZD (P) */}
+                        {parsed.code === 'P' && (
+                          <div className="flex h-full w-full flex-col items-center justify-center rounded border border-emerald-200 bg-emerald-50 text-emerald-900 shadow-2xs py-0.5">
+                            <span className="text-xs font-black text-emerald-800 leading-none">P</span>
+                            <span className="font-mono text-[9px] font-bold text-emerald-600 leading-tight mt-0.5">
+                              {parsed.startTime || '08:00'}
+                            </span>
+                            <span className="font-mono text-[9px] font-bold text-emerald-600 leading-tight">
+                              {parsed.endTime || '16:00'}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* INNA ZMIANA NIESTANDARDOWA */}
+                        {parsed.code && !['U', '*', 'D', 'N', 'P'].includes(parsed.code) && (
+                          <div className="flex h-full w-full flex-col items-center justify-center rounded border border-slate-300 bg-slate-100 text-slate-800 shadow-2xs py-0.5">
+                            <span className="text-xs font-black leading-none">{parsed.code}</span>
+                            {parsed.startTime && (
+                              <span className="font-mono text-[9px] font-bold text-slate-600 leading-tight mt-0.5">
+                                {parsed.startTime}
+                              </span>
+                            )}
+                            {parsed.endTime && (
+                              <span className="font-mono text-[9px] font-bold text-slate-600 leading-tight">
+                                {parsed.endTime}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* PUSTA KOMÓRKA */}
+                        {!parsed.code && (
+                          <div className="flex h-full w-full items-center justify-center text-slate-300 group-hover:text-blue-500 transition-colors">
+                            <span className="opacity-0 group-hover:opacity-100 text-xs font-bold">+</span>
+                          </div>
+                        )}
+
+                        {/* Quick Trigger Button */}
+                        <div className="no-print absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded bg-white/90 text-slate-400 opacity-0 shadow-2xs group-hover:opacity-100 transition-opacity">
                           <Clock className="h-2.5 w-2.5" />
-                        </button>
+                        </div>
                       </div>
                     </td>
                   );
@@ -342,14 +432,24 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
                   return (
                     <>
-                      <td className="border-r border-slate-200 bg-slate-50/70 px-1 py-1 font-mono text-[11px] font-semibold text-slate-700">
+                      <td
+                        className={`border-r border-slate-200 bg-slate-50/70 px-1 py-1 font-mono text-[11px] font-semibold text-slate-700 ${
+                          printSettings?.showDayHours !== false ? '' : 'print:hidden'
+                        }`}
+                      >
                         {dayHours}h
                       </td>
-                      <td className="border-r border-slate-200 bg-slate-50/70 px-1 py-1 font-mono text-[11px] font-semibold text-slate-700">
+                      <td
+                        className={`border-r border-slate-200 bg-slate-50/70 px-1 py-1 font-mono text-[11px] font-semibold text-slate-700 ${
+                          printSettings?.showNightHours !== false ? '' : 'print:hidden'
+                        }`}
+                      >
                         {nightHours}h
                       </td>
                       <td
-                        className={`border-r border-slate-200 px-1 py-1 font-mono text-[11px] transition-colors ${sumHoursBgClass}`}
+                        className={`border-r border-slate-200 px-1 py-1 font-mono text-[11px] transition-colors ${sumHoursBgClass} ${
+                          printSettings?.showTotalHours !== false ? '' : 'print:hidden'
+                        }`}
                         title={sumHoursTitle}
                       >
                         {totalWorkerHours}h
@@ -359,7 +459,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                           targetMatch
                             ? 'bg-emerald-50 text-emerald-800'
                             : 'bg-amber-50 text-amber-900'
-                        }`}
+                        } ${printSettings?.showShiftsCount !== false ? '' : 'print:hidden'}`}
                         title={`Wykonano: ${shiftCount} / Cel w ustawieniach: ${worker.maxShifts}`}
                       >
                         {shiftCount}
@@ -386,7 +486,11 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                 (bez pracowników podjazdowych)
               </span>
             </td>
-            <td className="sticky left-44 z-20 border-r border-slate-200 bg-slate-200"></td>
+            <td
+              className={`sticky left-44 z-20 border-r border-slate-200 bg-slate-200 ${
+                printSettings?.showVacation !== false ? '' : 'print:hidden'
+              }`}
+            ></td>
 
             {/* Daily Total Hours & Status - ONLY STATION WORKERS (NOT PODJAZD) */}
             {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -430,7 +534,11 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
             })}
 
             {/* Sub-totals for Day / Night */}
-            <td className="border-r border-slate-200 bg-slate-200 px-1 py-2 font-mono text-[10px] font-bold text-slate-700">
+            <td
+              className={`border-r border-slate-200 bg-slate-200 px-1 py-2 font-mono text-[10px] font-bold text-slate-700 ${
+                printSettings?.showDayHours !== false ? '' : 'print:hidden'
+              }`}
+            >
               {Array.from({ length: daysInMonth }).reduce<number>((acc, _, i) => {
                 const dateStr = formatDateKey(year, month, i + 1);
                 return (
@@ -443,7 +551,11 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
               }, 0)}
               h
             </td>
-            <td className="border-r border-slate-200 bg-slate-200 px-1 py-2 font-mono text-[10px] font-bold text-slate-700">
+            <td
+              className={`border-r border-slate-200 bg-slate-200 px-1 py-2 font-mono text-[10px] font-bold text-slate-700 ${
+                printSettings?.showNightHours !== false ? '' : 'print:hidden'
+              }`}
+            >
               {Array.from({ length: daysInMonth }).reduce<number>((acc, _, i) => {
                 const dateStr = formatDateKey(year, month, i + 1);
                 return (
@@ -457,13 +569,13 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
               h
             </td>
 
-            {/* TOTAL HOURS COLUMN: ZAŚWIECA SIĘ NA ZIELONO GDY DOKŁADNIE 1440h */}
+            {/* TOTAL HOURS COLUMN: ZAŚWIECA SIĘ NA ZIELONO GDY DOKŁADNIE 1440h (lub wymóg danego miesiąca) */}
             <td
               className={`border-r border-slate-300 px-1 py-2 font-mono text-xs font-black transition-colors ${
                 grandTotalHours === norm.totalStationHours
                   ? 'bg-emerald-600 text-white ring-2 ring-emerald-400'
                   : 'bg-amber-100 text-amber-950 font-bold'
-              }`}
+              } ${printSettings?.showTotalHours !== false ? '' : 'print:hidden'}`}
               title={`Suma godzin obsady stacji: ${grandTotalHours}h / wymagane: ${norm.totalStationHours}h (${daysInMonth} dni x 48h)`}
             >
               {grandTotalHours}h
@@ -474,7 +586,9 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
             {/* TOTAL SHIFTS COLUMN */}
             <td
-              className="bg-slate-300 px-1 py-2 font-mono text-xs font-black text-slate-900"
+              className={`bg-slate-300 px-1 py-2 font-mono text-xs font-black text-slate-900 ${
+                printSettings?.showShiftsCount !== false ? '' : 'print:hidden'
+              }`}
               title={`Główne zmiany stacji: ${grandTotalShifts} / wymagane: ${norm.totalStationShifts} | Podjazd: ${podjazdTotalShifts} zm.`}
             >
               {grandTotalShifts}
@@ -489,15 +603,29 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
       </table>
 
       {/* Legend & Help Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 sm:px-6 no-print">
         <div className="flex flex-wrap items-center gap-4">
-          <span className="font-bold text-slate-800">Oznaczenia i kolory normy (UoP):</span>
+          <span className="font-bold text-slate-800">Oznaczenia:</span>
+
+          <div className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1 rounded bg-emerald-500 px-1.5 py-0.5 font-bold text-white text-[10px]">
+              <Palmtree className="h-3 w-3" /> U
+            </span>
+            <span>Urlop wypoczynkowy</span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1 rounded border border-amber-300 bg-amber-100 px-1.5 py-0.5 font-bold text-amber-950 text-[10px]">
+              <Coffee className="h-3 w-3 text-amber-800" /> *
+            </span>
+            <span>Dzień wolny</span>
+          </div>
 
           <div className="flex items-center gap-1.5">
             <span className="rounded bg-blue-600 px-1.5 py-0.5 font-mono font-bold text-white text-[10px]">
               180h
             </span>
-            <span>Pełne zmiany ({norm.requiredShiftsCeil} zm. z nadgodzinami zaokrąglenia)</span>
+            <span>Pełne zmiany ({norm.requiredShiftsCeil} zm.)</span>
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -512,13 +640,6 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
               &lt; {norm.hours}h
             </span>
             <span>Niedobór godzin do normy</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="rounded bg-slate-200 px-1.5 py-0.5 font-mono font-bold text-slate-800 text-[10px]">
-              UZ
-            </span>
-            <span>Umowa zlecenie (brak wymogu normy)</span>
           </div>
         </div>
 

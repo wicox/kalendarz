@@ -6,10 +6,11 @@ import { ShiftModal } from './components/ShiftModal';
 import { AutoFillModal } from './components/AutoFillModal';
 import { WorkerManagerModal } from './components/WorkerManagerModal';
 import { BatchAbsenceModal } from './components/BatchAbsenceModal';
+import { PrintSettingsModal } from './components/PrintSettingsModal';
 import { StatsPanel } from './components/StatsPanel';
 import { AuditPanel } from './components/AuditPanel';
 
-import { Worker, AutoFillOptions, AutoFillResult } from './types/schedule';
+import { Worker, AutoFillOptions, AutoFillResult, PrintSettings } from './types/schedule';
 import {
   calculateWorkNorm,
   getDaysInMonth,
@@ -19,19 +20,23 @@ import {
 } from './utils/calendar';
 import { solveSchedule, calculateBalancedTargets } from './utils/autoFillSolver';
 import { auditSchedule } from './utils/audit';
-import { exportScheduleToJson, exportScheduleToCsv } from './utils/exportUtils';
+import {
+  exportScheduleToJson,
+  exportScheduleToExcel,
+  exportScheduleToHtml,
+} from './utils/exportUtils';
 
 const DEFAULT_WORKERS: Worker[] = [
-  { id: 'w-1', name: 'Jan Kowalski', contractType: 'uop', oldVacation: 5, newVacation: 26, nightPref: 50, experience: 8, maxShifts: 15, isPodjazd: false },
-  { id: 'w-2', name: 'Anna Nowak', contractType: 'uop', oldVacation: 0, newVacation: 26, nightPref: 100, experience: 3, maxShifts: 15, isPodjazd: false },
-  { id: 'w-3', name: 'Piotr Wiśniewski', contractType: 'uop', oldVacation: 2, newVacation: 26, nightPref: 20, experience: 9, maxShifts: 15, isPodjazd: false },
-  { id: 'w-4', name: 'Maria Wójcik', contractType: 'uop', oldVacation: 0, newVacation: 26, nightPref: 50, experience: 2, maxShifts: 15, isPodjazd: false },
-  { id: 'w-5', name: 'Krzysztof Kowalczyk', contractType: 'uop', oldVacation: 10, newVacation: 26, nightPref: 80, experience: 7, maxShifts: 15, isPodjazd: false },
-  { id: 'w-6', name: 'Agnieszka Kamińska', contractType: 'uop', oldVacation: 0, newVacation: 26, nightPref: 10, experience: 4, maxShifts: 15, isPodjazd: false },
-  { id: 'w-7', name: 'Tomasz Lewandowski', contractType: 'uop', oldVacation: 4, newVacation: 26, nightPref: 50, experience: 6, maxShifts: 15, isPodjazd: false },
-  { id: 'w-8', name: 'Ewa Zielińska', contractType: 'uop', oldVacation: 1, newVacation: 26, nightPref: 90, experience: 3, maxShifts: 15, isPodjazd: false },
-  { id: 'w-9', name: 'Michał Szymański', contractType: 'uz', oldVacation: 0, newVacation: 0, nightPref: 30, experience: 5, maxShifts: 0, isPodjazd: false },
-  { id: 'w-10', name: 'Magdalena Woźniak', contractType: 'uz', oldVacation: 0, newVacation: 0, nightPref: 50, experience: 4, maxShifts: 0, isPodjazd: false },
+  { id: 'w-1', firstName: 'Anna', lastName: 'J.', name: 'Anna J.', contractType: 'uop', oldVacation: 5, newVacation: 26, nightPref: 50, experience: 8, maxShifts: 15, isPodjazd: false },
+  { id: 'w-2', firstName: 'Barbara', lastName: 'H.', name: 'Barbara H.', contractType: 'uop', oldVacation: 0, newVacation: 26, nightPref: 100, experience: 3, maxShifts: 15, isPodjazd: false },
+  { id: 'w-3', firstName: 'Celina', lastName: 'K.', name: 'Celina K.', contractType: 'uop', oldVacation: 2, newVacation: 26, nightPref: 20, experience: 9, maxShifts: 15, isPodjazd: false },
+  { id: 'w-4', firstName: 'Dariusz', lastName: 'M.', name: 'Dariusz M.', contractType: 'uop', oldVacation: 0, newVacation: 26, nightPref: 50, experience: 2, maxShifts: 15, isPodjazd: false },
+  { id: 'w-5', firstName: 'Ewa', lastName: 'N.', name: 'Ewa N.', contractType: 'uop', oldVacation: 10, newVacation: 26, nightPref: 80, experience: 7, maxShifts: 15, isPodjazd: false },
+  { id: 'w-6', firstName: 'Filip', lastName: 'P.', name: 'Filip P.', contractType: 'uop', oldVacation: 0, newVacation: 26, nightPref: 10, experience: 4, maxShifts: 15, isPodjazd: false },
+  { id: 'w-7', firstName: 'Grzegorz', lastName: 'R.', name: 'Grzegorz R.', contractType: 'uop', oldVacation: 4, newVacation: 26, nightPref: 50, experience: 6, maxShifts: 15, isPodjazd: false },
+  { id: 'w-8', firstName: 'Hanna', lastName: 'S.', name: 'Hanna S.', contractType: 'uop', oldVacation: 1, newVacation: 26, nightPref: 90, experience: 3, maxShifts: 15, isPodjazd: false },
+  { id: 'w-9', firstName: 'Igor', lastName: 'T.', name: 'Igor T.', contractType: 'uz', oldVacation: 0, newVacation: 0, nightPref: 30, experience: 5, maxShifts: 0, isPodjazd: false },
+  { id: 'w-10', firstName: 'Janina', lastName: 'W.', name: 'Janina W.', contractType: 'uz', oldVacation: 0, newVacation: 0, nightPref: 50, experience: 4, maxShifts: 0, isPodjazd: false },
 ];
 
 const DEFAULT_OPTIONS: AutoFillOptions = {
@@ -46,6 +51,17 @@ const DEFAULT_OPTIONS: AutoFillOptions = {
   ensureFreeSunday: true,
 };
 
+const DEFAULT_PRINT_SETTINGS: PrintSettings = {
+  showLastName: true,
+  showExperience: true,
+  showContractType: true,
+  showVacation: true,
+  showDayHours: true,
+  showNightHours: true,
+  showTotalHours: true,
+  showShiftsCount: true,
+};
+
 export default function App() {
   // Current view date (Defaults to 2026-09-01)
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date(2026, 8, 1));
@@ -58,17 +74,34 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((w, idx) => ({
-            id: w.id || `w-${idx + 1}`,
-            name: typeof w === 'string' ? w : w.name,
-            contractType: w.contractType === 'uz' ? 'uz' : 'uop',
-            oldVacation: Number(w.oldVacation) || 0,
-            newVacation: w.newVacation !== undefined ? Number(w.newVacation) : 26,
-            nightPref: w.nightPref !== undefined ? Number(w.nightPref) : 50,
-            experience: w.experience !== undefined ? Number(w.experience) : 5,
-            maxShifts: w.maxShifts !== undefined ? Number(w.maxShifts) : 15,
-            isPodjazd: Boolean(w.isPodjazd),
-          }));
+          // Jeśli w localStorage były stare przykładowe dane z pełnymi nazwiskami typu "Jan Kowalski", przełączamy na żądane inicjały
+          const hasOldDemoSurnames = parsed.some(
+            (w: any) => w.name === 'Jan Kowalski' || w.name === 'Piotr Wiśniewski'
+          );
+          if (hasOldDemoSurnames) {
+            return DEFAULT_WORKERS;
+          }
+
+          return parsed.map((w, idx) => {
+            const rawName = typeof w === 'string' ? w : w.name || `Pracownik ${idx + 1}`;
+            const parts = rawName.split(' ');
+            const fName = w.firstName !== undefined ? w.firstName : parts[0] || '';
+            const lName = w.lastName !== undefined ? w.lastName : parts.slice(1).join(' ');
+
+            return {
+              id: w.id || `w-${idx + 1}`,
+              name: rawName,
+              firstName: fName,
+              lastName: lName,
+              contractType: w.contractType === 'uz' ? 'uz' : 'uop',
+              oldVacation: Number(w.oldVacation) || 0,
+              newVacation: w.newVacation !== undefined ? Number(w.newVacation) : 26,
+              nightPref: w.nightPref !== undefined ? Number(w.nightPref) : 50,
+              experience: w.experience !== undefined ? Number(w.experience) : 5,
+              maxShifts: w.maxShifts !== undefined ? Number(w.maxShifts) : 15,
+              isPodjazd: Boolean(w.isPodjazd),
+            };
+          });
         }
       }
     } catch (e) {
@@ -106,10 +139,21 @@ export default function App() {
     }
   });
 
+  // Print Settings
+  const [printSettings, setPrintSettings] = useState<PrintSettings>(() => {
+    try {
+      const saved = localStorage.getItem('printSettings');
+      return saved ? JSON.parse(saved) : DEFAULT_PRINT_SETTINGS;
+    } catch {
+      return DEFAULT_PRINT_SETTINGS;
+    }
+  });
+
   // Modals & UI Controls
   const [isAutoFillOpen, setIsAutoFillOpen] = useState(false);
   const [isWorkersOpen, setIsWorkersOpen] = useState(false);
   const [isBatchAbsenceOpen, setIsBatchAbsenceOpen] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [lastAutoFillResult, setLastAutoFillResult] = useState<AutoFillResult | null>(null);
 
   const [shiftModal, setShiftModal] = useState<{
@@ -154,37 +198,34 @@ export default function App() {
     localStorage.setItem('autoFillOptions', JSON.stringify(autoFillOptions));
   }, [autoFillOptions]);
 
-  // Derived Calculations
+  useEffect(() => {
+    localStorage.setItem('printSettings', JSON.stringify(printSettings));
+  }, [printSettings]);
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMonth = getDaysInMonth(year, month);
-  const norm = useMemo(() => calculateWorkNorm(year, month), [year, month]);
+  const norm = calculateWorkNorm(year, month);
 
-  // Pracownicy stacji (bez podjazdu)
-  const mainWorkers = useMemo(() => workers.filter((w) => !w.isPodjazd), [workers]);
-
-  const totalConfiguredShifts = useMemo(() => {
-    return mainWorkers.reduce((acc, w) => acc + (w.maxShifts !== undefined ? w.maxShifts : 0), 0);
-  }, [mainWorkers]);
-
+  // Zliczanie zaplanowanych godzin i zmian ze stacji
+  const stationWorkers = workers.filter((w) => !w.isPodjazd);
+  const totalConfiguredShifts = stationWorkers.reduce((acc, w) => acc + (w.maxShifts || 0), 0);
   const totalConfiguredHours = totalConfiguredShifts * 12;
 
-  // Run Real-Time Audit
+  // Real-time schedule audit
   const conflicts = useMemo(() => {
     return auditSchedule(workers, year, month, scheduleData);
   }, [workers, year, month, scheduleData]);
 
-  // Handlers
   const handleChangeMonth = (delta: number) => {
-    const nextDate = new Date(year, month + delta, 1);
-    setCurrentDate(nextDate);
+    setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
   };
 
   const handleSaveShift = (workerName: string, dateStr: string, value: string) => {
     setScheduleData((prev) => {
       const next = { ...prev };
       const key = `${workerName}_${dateStr}`;
-      if (value.trim()) {
+      if (value && value.trim()) {
         next[key] = value;
       } else {
         delete next[key];
@@ -201,24 +242,32 @@ export default function App() {
   };
 
   const handleClearMonth = () => {
-    if (window.confirm(`Czy na pewno chcesz wyczyścić cały grafik na ${POLISH_MONTHS[month]} ${year}?`)) {
+    if (
+      window.confirm(
+        `Czy na pewno chcesz wyczyścić wszystkie wpisy grafiku dla miesiąca ${POLISH_MONTHS[month]} ${year}?`
+      )
+    ) {
       setScheduleData((prev) => {
-        const next = { ...prev };
-        workers.forEach((w) => {
-          for (let day = 1; day <= daysInMonth; day++) {
-            delete next[`${w.name}_${formatDateKey(year, month, day)}`];
+        const next: Record<string, string> = {};
+        const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+        for (const k in prev) {
+          if (!k.includes(`_${prefix}-`)) {
+            next[k] = prev[k];
           }
-        });
+        }
         return next;
       });
-      showToast(`Wyczyszczono grafik na miesiąc ${POLISH_MONTHS[month]} ${year}`, 'warning');
+      showToast('Wyczyszczono wpisy dla bieżącego miesiąca', 'warning');
     }
   };
 
-  /**
-   * Automatyczne wyrównanie i podzielenie normy zmian między pracowników,
-   * tak aby suma wynosiła dokładnie dniMiesiąca * 48h (np. 1440h = 120 zmian dla września).
-   */
+  const handleApplyNormToAll = (targetNormShifts: number) => {
+    setWorkers((prev) =>
+      prev.map((w) => (w.isPodjazd ? w : { ...w, maxShifts: targetNormShifts }))
+    );
+    showToast(`Ustawiono ${targetNormShifts} zmian wszystkim pracownikom stacji`, 'success');
+  };
+
   const handleBalanceNorms = () => {
     const balanced = calculateBalancedTargets(workers, daysInMonth);
     const targetMap = new Map(balanced.map((b) => [b.workerId, b.targetShifts]));
@@ -231,20 +280,14 @@ export default function App() {
         return w;
       })
     );
-    showToast(
-      `Pomyślnie dopasowano normę: ${norm.totalStationHours}h (${norm.totalStationShifts} zmian) rozdzielono w zespole.`,
-      'success'
-    );
+    showToast(`Wyrównano cele zmian do idealnych ${norm.totalStationHours} godzin!`, 'success');
   };
 
-  const handleApplyNormToAll = (shiftsNorm: number) => {
-    setWorkers((prev) =>
-      prev.map((w) => (!w.isPodjazd ? { ...w, maxShifts: shiftsNorm } : w))
-    );
-    showToast(`Ustawiono ${shiftsNorm} zmian (${shiftsNorm * 12}h) wszystkim pracownikom stacji`, 'success');
-  };
-
-  const handleBatchAbsence = (workerName: string, days: number[], status: 'U' | '*' | '') => {
+  const handleBatchAbsence = (
+    workerName: string,
+    days: number[],
+    status: 'U' | '*' | ''
+  ) => {
     setScheduleData((prev) => {
       const next = { ...prev };
       days.forEach((day) => {
@@ -260,9 +303,6 @@ export default function App() {
     showToast(`Zaktualizowano dni dla ${workerName}`, 'success');
   };
 
-  /**
-   * Uruchomienie zaawansowanego algorytmu auto-wypełniania
-   */
   const handleRunAutoFill = () => {
     if (totalConfiguredShifts !== norm.totalStationShifts) {
       if (
@@ -316,17 +356,26 @@ export default function App() {
         const imported = JSON.parse(e.target?.result as string);
         if (imported.workers && imported.scheduleData) {
           setWorkers(
-            imported.workers.map((w: any, idx: number) => ({
-              id: w.id || `w-${idx + 1}`,
-              name: typeof w === 'string' ? w : w.name,
-              contractType: w.contractType === 'uz' ? 'uz' : 'uop',
-              oldVacation: Number(w.oldVacation) || 0,
-              newVacation: w.newVacation !== undefined ? Number(w.newVacation) : 26,
-              nightPref: w.nightPref !== undefined ? Number(w.nightPref) : 50,
-              experience: w.experience !== undefined ? Number(w.experience) : 5,
-              maxShifts: w.maxShifts !== undefined ? Number(w.maxShifts) : norm.requiredShiftsCeil,
-              isPodjazd: Boolean(w.isPodjazd),
-            }))
+            imported.workers.map((w: any, idx: number) => {
+              const rawName = typeof w === 'string' ? w : w.name || `Pracownik ${idx + 1}`;
+              const parts = rawName.split(' ');
+              const fName = w.firstName !== undefined ? w.firstName : parts[0] || '';
+              const lName = w.lastName !== undefined ? w.lastName : parts.slice(1).join(' ');
+
+              return {
+                id: w.id || `w-${idx + 1}`,
+                name: rawName,
+                firstName: fName,
+                lastName: lName,
+                contractType: w.contractType === 'uz' ? 'uz' : 'uop',
+                oldVacation: Number(w.oldVacation) || 0,
+                newVacation: w.newVacation !== undefined ? Number(w.newVacation) : 26,
+                nightPref: w.nightPref !== undefined ? Number(w.nightPref) : 50,
+                experience: w.experience !== undefined ? Number(w.experience) : 5,
+                maxShifts: w.maxShifts !== undefined ? Number(w.maxShifts) : norm.requiredShiftsCeil,
+                isPodjazd: Boolean(w.isPodjazd),
+              };
+            })
           );
           setScheduleData(imported.scheduleData);
           if (imported.tradingSundays) setTradingSundays(imported.tradingSundays);
@@ -381,7 +430,7 @@ export default function App() {
         onTabChange={setActiveTab}
         conflictCount={conflicts.filter((c) => c.severity === 'error').length}
         onOpenAutoFill={() => setIsAutoFillOpen(true)}
-        onPrint={handlePrint}
+        onPrint={() => setIsPrintModalOpen(true)}
       />
 
       {/* Action Toolbar */}
@@ -398,8 +447,10 @@ export default function App() {
             exportScheduleToJson(workers, scheduleData, tradingSundays, year, month)
           }
           onImportJson={handleImportJson}
-          onExportCsv={() => exportScheduleToCsv(workers, scheduleData, year, month)}
+          onExportExcel={() => exportScheduleToExcel(workers, scheduleData, year, month, tradingSundays)}
+          onExportHtml={() => exportScheduleToHtml(workers, scheduleData, year, month, tradingSundays)}
           onOpenWorkers={() => setIsWorkersOpen(true)}
+          onOpenPrintModal={() => setIsPrintModalOpen(true)}
         />
       </div>
 
@@ -412,6 +463,7 @@ export default function App() {
               workers={workers}
               scheduleData={scheduleData}
               tradingSundays={tradingSundays}
+              printSettings={printSettings}
               onSaveShift={handleSaveShift}
               onOpenTimeModal={(workerName, dateStr) => {
                 setShiftModal({
@@ -580,6 +632,14 @@ export default function App() {
         workers={workers}
         onApplyBatch={handleBatchAbsence}
         onClose={() => setIsBatchAbsenceOpen(false)}
+      />
+
+      <PrintSettingsModal
+        isOpen={isPrintModalOpen}
+        settings={printSettings}
+        onSettingsChange={setPrintSettings}
+        onPrint={handlePrint}
+        onClose={() => setIsPrintModalOpen(false)}
       />
     </div>
   );

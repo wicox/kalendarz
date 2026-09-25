@@ -2,15 +2,28 @@ export type ContractType = 'uop' | 'uz'; // 'uop' = Umowa o pracę (obowiązuje 
 
 export interface Worker {
   id: string;
-  name: string;
-  contractType: ContractType; // Umowa o pracę / Umowa zlecenie
-  oldVacation: number;        // Zaległy urlop (dni)
-  newVacation: number;        // Bieżący urlop (dni, standardowo 26)
-  nightPref: number;          // Preferencja nocy: 0% = tylko dzień, 100% = tylko noc, 50% = równe
-  experience: number;         // Poziom doświadczenia: 1 (stażysta) do 10 (starszy kierownik zmiany)
-  maxShifts: number;          // Docelowa liczba zmian w miesiącu
-  isPodjazd: boolean;         // Pracownik podjazdowy (obsługa dystrybutorów, nie wlicza się do głównej obsady kasy/stacji)
-  targetHours?: number;       // Opcjonalne docelowe godziny
+  firstName: string;         // Imię (np. Anna)
+  lastName: string;          // Nazwisko / Inicjał (np. J.)
+  name: string;              // Pełna nazwa robocza (np. "Anna J.")
+  contractType: ContractType;// Umowa o pracę / Umowa zlecenie
+  oldVacation: number;       // Zaległy urlop (dni)
+  newVacation: number;       // Bieżący urlop (dni, standardowo 26)
+  nightPref: number;         // Preferencja nocy: 0% = tylko dzień, 100% = tylko noc, 50% = równe
+  experience: number;        // Poziom doświadczenia: 1 (stażysta) do 10 (starszy kierownik zmiany)
+  maxShifts: number;         // Docelowa liczba zmian w miesiącu
+  isPodjazd: boolean;        // Pracownik podjazdowy (obsługa dystrybutorów, nie wlicza się do głównej obsady kasy/stacji)
+  targetHours?: number;      // Opcjonalne docelowe godziny
+}
+
+export interface PrintSettings {
+  showLastName: boolean;     // Drukuj nazwisko / inicjał
+  showExperience: boolean;   // Drukuj doświadczenie i preferencję nocy (dośw. 4 · noc 50%)
+  showContractType: boolean; // Drukuj typ umowy (UoP / UZ)
+  showVacation: boolean;     // Drukuj kolumnę Urlop
+  showDayHours: boolean;     // Drukuj kolumnę D (h)
+  showNightHours: boolean;   // Drukuj kolumnę N (h)
+  showTotalHours: boolean;   // Drukuj kolumnę Suma h
+  showShiftsCount: boolean;  // Drukuj kolumnę Zmiany
 }
 
 export type ShiftCode = 'D' | 'N' | 'P' | 'U' | '*' | '';

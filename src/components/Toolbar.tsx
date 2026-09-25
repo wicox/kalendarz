@@ -1,8 +1,7 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import {
   ChevronLeft,
   ChevronRight,
-  RotateCcw,
   Sparkles,
   SlidersHorizontal,
   CalendarDays,
@@ -11,6 +10,8 @@ import {
   Upload,
   FileSpreadsheet,
   Users,
+  Printer,
+  FileCode,
 } from 'lucide-react';
 import { POLISH_MONTHS } from '../utils/calendar';
 
@@ -24,8 +25,10 @@ interface ToolbarProps {
   onClearMonth: () => void;
   onExportJson: () => void;
   onImportJson: (file: File) => void;
-  onExportCsv: () => void;
+  onExportExcel: () => void;
+  onExportHtml: () => void;
   onOpenWorkers: () => void;
+  onOpenPrintModal: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -38,10 +41,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onClearMonth,
   onExportJson,
   onImportJson,
-  onExportCsv,
+  onExportExcel,
+  onExportHtml,
   onOpenWorkers,
+  onOpenPrintModal,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const monthIndex = currentDate.getMonth();
   const year = currentDate.getFullYear();
@@ -67,7 +72,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5">
             <button
               onClick={() => onChangeMonth(-1)}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-slate-700 hover:bg-white hover:shadow-xs active:bg-slate-200 transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-slate-700 hover:bg-white hover:shadow-xs active:bg-slate-200 transition-colors cursor-pointer"
               title="Poprzedni miesiąc"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -79,7 +84,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
             <button
               onClick={() => onChangeMonth(1)}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-slate-700 hover:bg-white hover:shadow-xs active:bg-slate-200 transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-slate-700 hover:bg-white hover:shadow-xs active:bg-slate-200 transition-colors cursor-pointer"
               title="Następny miesiąc"
             >
               <ChevronRight className="h-4 w-4" />
@@ -88,7 +93,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
           <button
             onClick={handleJumpToToday}
-            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer"
             title="Przejdź do bieżącego miesiąca"
           >
             Bieżący
@@ -99,7 +104,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <div className="flex flex-wrap items-center gap-1.5">
           <button
             onClick={onOpenAutoFill}
-            className="flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-slate-950 shadow-xs hover:bg-amber-400 active:bg-amber-600 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-slate-950 shadow-xs hover:bg-amber-400 active:bg-amber-600 transition-colors cursor-pointer"
             title="Inteligentne automatyczne wypełnianie z zaawansowaną optymalizacją"
           >
             <Sparkles className="h-3.5 w-3.5" />
@@ -108,7 +113,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
           <button
             onClick={onBalanceNorms}
-            className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100 active:bg-amber-200 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100 active:bg-amber-200 transition-colors cursor-pointer"
             title="Wyrównaj sumę zaplanowanych zmian zespołu do dokładnej normy miesiąca"
           >
             <SlidersHorizontal className="h-3.5 w-3.5 text-amber-700" />
@@ -118,7 +123,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
           <button
             onClick={onOpenBatchAbsence}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer"
             title="Seryjne wprowadzanie urlopów i dni wolnych dla pracownika"
           >
             <CalendarDays className="h-3.5 w-3.5 text-emerald-600" />
@@ -128,28 +133,47 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
           <button
             onClick={onOpenWorkers}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
-            title="Zarządzaj zespołem, preferencjami i doświadczeniem"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer"
+            title="Zarządzaj zespołem, imieniem i nazwiskiem, preferencjami i doświadczeniem"
           >
             <Users className="h-3.5 w-3.5 text-slate-500" />
             <span className="hidden sm:inline">Pracownicy</span>
           </button>
 
+          <button
+            onClick={onOpenPrintModal}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer"
+            title="Wybierz opcje i wydrukuj grafik"
+          >
+            <Printer className="h-3.5 w-3.5 text-slate-600" />
+            <span className="hidden sm:inline">Opcje Wydruku</span>
+            <span className="sm:hidden">Druk</span>
+          </button>
+
           <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
 
-          {/* Import / Export Group */}
+          {/* Export Group: Excel / HTML / JSON */}
           <button
-            onClick={onExportCsv}
-            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-            title="Eksportuj do pliku CSV / Excel"
+            onClick={onExportExcel}
+            className="flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-900 hover:bg-emerald-100 transition-colors cursor-pointer"
+            title="Pobierz plik Excel ze stylami i kolorami"
           >
-            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-            <span className="hidden lg:inline">Excel/CSV</span>
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-700" />
+            <span>Excel (.xls)</span>
+          </button>
+
+          <button
+            onClick={onExportHtml}
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+            title="Pobierz samodzielną stronę HTML z grafikiem"
+          >
+            <FileCode className="h-3.5 w-3.5 text-purple-600" />
+            <span className="hidden lg:inline">HTML</span>
           </button>
 
           <button
             onClick={onExportJson}
-            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
             title="Zapisz kopię zapasową (JSON)"
           >
             <Download className="h-3.5 w-3.5 text-blue-600" />
@@ -158,7 +182,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
             title="Otwórz plik kopii grafiku (JSON)"
           >
             <Upload className="h-3.5 w-3.5 text-slate-600" />
@@ -174,7 +198,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
           <button
             onClick={onClearMonth}
-            className="flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+            className="flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
             title="Wyczyść wszystkie zmiany w tym miesiącu"
           >
             <Trash2 className="h-3.5 w-3.5" />
