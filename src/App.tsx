@@ -22,16 +22,16 @@ import { auditSchedule } from './utils/audit';
 import { exportScheduleToJson, exportScheduleToCsv } from './utils/exportUtils';
 
 const DEFAULT_WORKERS: Worker[] = [
-  { id: 'w-1', name: 'Jan Kowalski', oldVacation: 5, newVacation: 26, nightPref: 50, experience: 8, maxShifts: 12, isPodjazd: false },
-  { id: 'w-2', name: 'Anna Nowak', oldVacation: 0, newVacation: 26, nightPref: 100, experience: 3, maxShifts: 12, isPodjazd: false },
-  { id: 'w-3', name: 'Piotr Wiśniewski', oldVacation: 2, newVacation: 26, nightPref: 20, experience: 9, maxShifts: 12, isPodjazd: false },
-  { id: 'w-4', name: 'Maria Wójcik', oldVacation: 0, newVacation: 26, nightPref: 50, experience: 2, maxShifts: 12, isPodjazd: false },
-  { id: 'w-5', name: 'Krzysztof Kowalczyk', oldVacation: 10, newVacation: 26, nightPref: 80, experience: 7, maxShifts: 12, isPodjazd: false },
-  { id: 'w-6', name: 'Agnieszka Kamińska', oldVacation: 0, newVacation: 26, nightPref: 10, experience: 4, maxShifts: 12, isPodjazd: false },
-  { id: 'w-7', name: 'Tomasz Lewandowski', oldVacation: 4, newVacation: 26, nightPref: 50, experience: 6, maxShifts: 12, isPodjazd: false },
-  { id: 'w-8', name: 'Ewa Zielińska', oldVacation: 1, newVacation: 26, nightPref: 90, experience: 3, maxShifts: 12, isPodjazd: false },
-  { id: 'w-9', name: 'Michał Szymański', oldVacation: 0, newVacation: 26, nightPref: 30, experience: 5, maxShifts: 12, isPodjazd: false },
-  { id: 'w-10', name: 'Magdalena Woźniak', oldVacation: 3, newVacation: 26, nightPref: 50, experience: 4, maxShifts: 12, isPodjazd: false },
+  { id: 'w-1', name: 'Jan Kowalski', contractType: 'uop', oldVacation: 5, newVacation: 26, nightPref: 50, experience: 8, maxShifts: 15, isPodjazd: false },
+  { id: 'w-2', name: 'Anna Nowak', contractType: 'uop', oldVacation: 0, newVacation: 26, nightPref: 100, experience: 3, maxShifts: 15, isPodjazd: false },
+  { id: 'w-3', name: 'Piotr Wiśniewski', contractType: 'uop', oldVacation: 2, newVacation: 26, nightPref: 20, experience: 9, maxShifts: 15, isPodjazd: false },
+  { id: 'w-4', name: 'Maria Wójcik', contractType: 'uop', oldVacation: 0, newVacation: 26, nightPref: 50, experience: 2, maxShifts: 15, isPodjazd: false },
+  { id: 'w-5', name: 'Krzysztof Kowalczyk', contractType: 'uop', oldVacation: 10, newVacation: 26, nightPref: 80, experience: 7, maxShifts: 15, isPodjazd: false },
+  { id: 'w-6', name: 'Agnieszka Kamińska', contractType: 'uop', oldVacation: 0, newVacation: 26, nightPref: 10, experience: 4, maxShifts: 15, isPodjazd: false },
+  { id: 'w-7', name: 'Tomasz Lewandowski', contractType: 'uop', oldVacation: 4, newVacation: 26, nightPref: 50, experience: 6, maxShifts: 15, isPodjazd: false },
+  { id: 'w-8', name: 'Ewa Zielińska', contractType: 'uop', oldVacation: 1, newVacation: 26, nightPref: 90, experience: 3, maxShifts: 15, isPodjazd: false },
+  { id: 'w-9', name: 'Michał Szymański', contractType: 'uz', oldVacation: 0, newVacation: 0, nightPref: 30, experience: 5, maxShifts: 0, isPodjazd: false },
+  { id: 'w-10', name: 'Magdalena Woźniak', contractType: 'uz', oldVacation: 0, newVacation: 0, nightPref: 50, experience: 4, maxShifts: 0, isPodjazd: false },
 ];
 
 const DEFAULT_OPTIONS: AutoFillOptions = {
@@ -61,11 +61,12 @@ export default function App() {
           return parsed.map((w, idx) => ({
             id: w.id || `w-${idx + 1}`,
             name: typeof w === 'string' ? w : w.name,
+            contractType: w.contractType === 'uz' ? 'uz' : 'uop',
             oldVacation: Number(w.oldVacation) || 0,
             newVacation: w.newVacation !== undefined ? Number(w.newVacation) : 26,
             nightPref: w.nightPref !== undefined ? Number(w.nightPref) : 50,
             experience: w.experience !== undefined ? Number(w.experience) : 5,
-            maxShifts: w.maxShifts !== undefined ? Number(w.maxShifts) : 12,
+            maxShifts: w.maxShifts !== undefined ? Number(w.maxShifts) : 15,
             isPodjazd: Boolean(w.isPodjazd),
           }));
         }
@@ -157,14 +158,16 @@ export default function App() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMonth = getDaysInMonth(year, month);
-  const totalRequiredShifts = daysInMonth * 4;
-  const workNorm = calculateWorkNorm(year, month);
+  const norm = useMemo(() => calculateWorkNorm(year, month), [year, month]);
 
+  // Pracownicy stacji (bez podjazdu)
   const mainWorkers = useMemo(() => workers.filter((w) => !w.isPodjazd), [workers]);
 
   const totalConfiguredShifts = useMemo(() => {
-    return mainWorkers.reduce((acc, w) => acc + (w.maxShifts !== undefined ? w.maxShifts : 15), 0);
+    return mainWorkers.reduce((acc, w) => acc + (w.maxShifts !== undefined ? w.maxShifts : 0), 0);
   }, [mainWorkers]);
+
+  const totalConfiguredHours = totalConfiguredShifts * 12;
 
   // Run Real-Time Audit
   const conflicts = useMemo(() => {
@@ -214,7 +217,7 @@ export default function App() {
 
   /**
    * Automatyczne wyrównanie i podzielenie normy zmian między pracowników,
-   * tak aby suma wynosiła dokładnie dniMiesiąca * 4.
+   * tak aby suma wynosiła dokładnie dniMiesiąca * 48h (np. 1440h = 120 zmian dla września).
    */
   const handleBalanceNorms = () => {
     const balanced = calculateBalancedTargets(workers, daysInMonth);
@@ -229,16 +232,16 @@ export default function App() {
       })
     );
     showToast(
-      `Pomyślnie dopasowano normę: ${totalRequiredShifts} zmian podzielono równomiernie między ${mainWorkers.length} pracowników głównych.`,
+      `Pomyślnie dopasowano normę: ${norm.totalStationHours}h (${norm.totalStationShifts} zmian) rozdzielono w zespole.`,
       'success'
     );
   };
 
-  const handleApplyNormToAll = (norm: number) => {
+  const handleApplyNormToAll = (shiftsNorm: number) => {
     setWorkers((prev) =>
-      prev.map((w) => (!w.isPodjazd ? { ...w, maxShifts: norm } : w))
+      prev.map((w) => (!w.isPodjazd ? { ...w, maxShifts: shiftsNorm } : w))
     );
-    showToast(`Ustawiono ${norm} zmian wszystkim pracownikom głównym`, 'success');
+    showToast(`Ustawiono ${shiftsNorm} zmian (${shiftsNorm * 12}h) wszystkim pracownikom stacji`, 'success');
   };
 
   const handleBatchAbsence = (workerName: string, days: number[], status: 'U' | '*' | '') => {
@@ -261,16 +264,15 @@ export default function App() {
    * Uruchomienie zaawansowanego algorytmu auto-wypełniania
    */
   const handleRunAutoFill = () => {
-    // Sprawdzenie czy cele się zgadzają
-    if (totalConfiguredShifts !== totalRequiredShifts) {
+    if (totalConfiguredShifts !== norm.totalStationShifts) {
       if (
         window.confirm(
-          `Suma zmian pracowników (${totalConfiguredShifts}) różni się od wymogu kalendarza (${totalRequiredShifts} zmian).\n\n` +
+          `Suma zmian pracowników wynosi ${totalConfiguredShifts} (${totalConfiguredHours}h), ` +
+          `podczas gdy obsada stacji wymaga dokładnie ${norm.totalStationShifts} zmian (${norm.totalStationHours}h).\n\n` +
           `Czy chcesz, aby system automatycznie wyrównał normę i wygenerował optymalny grafik?`
         )
       ) {
         handleBalanceNorms();
-        // Pobierz natychmiast zaktualizowanych pracowników
         const balanced = calculateBalancedTargets(workers, daysInMonth);
         const targetMap = new Map(balanced.map((b) => [b.workerId, b.targetShifts]));
         const updatedWorkers = workers.map((w) =>
@@ -317,11 +319,12 @@ export default function App() {
             imported.workers.map((w: any, idx: number) => ({
               id: w.id || `w-${idx + 1}`,
               name: typeof w === 'string' ? w : w.name,
+              contractType: w.contractType === 'uz' ? 'uz' : 'uop',
               oldVacation: Number(w.oldVacation) || 0,
               newVacation: w.newVacation !== undefined ? Number(w.newVacation) : 26,
               nightPref: w.nightPref !== undefined ? Number(w.nightPref) : 50,
               experience: w.experience !== undefined ? Number(w.experience) : 5,
-              maxShifts: w.maxShifts !== undefined ? Number(w.maxShifts) : 12,
+              maxShifts: w.maxShifts !== undefined ? Number(w.maxShifts) : norm.requiredShiftsCeil,
               isPodjazd: Boolean(w.isPodjazd),
             }))
           );
@@ -366,9 +369,14 @@ export default function App() {
       {/* Main App Header */}
       <Header
         currentDate={currentDate}
-        workNormHours={workNorm.hours}
+        workNormHours={norm.hours}
+        shiftsRaw={norm.shiftsRaw}
+        requiredShiftsCeil={norm.requiredShiftsCeil}
+        overtimeHours={norm.overtimeHours}
+        totalStationHours={norm.totalStationHours}
+        totalStationShifts={norm.totalStationShifts}
+        totalConfiguredHours={totalConfiguredHours}
         totalConfiguredShifts={totalConfiguredShifts}
-        totalRequiredShifts={totalRequiredShifts}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         conflictCount={conflicts.filter((c) => c.severity === 'error').length}
@@ -442,15 +450,15 @@ export default function App() {
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-bold text-slate-900">
-                    Skład Zespołu i Profile Pracowników
+                    Skład Zespołu, Rodzaje Umów i Normy
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Definiuj poziomy doświadczenia (1-10), preferencje nocek oraz limity zmian
+                    Miesiąc {POLISH_MONTHS[month]} {year}: Norma etatu {norm.hours}h ({norm.requiredShiftsCeil} zmian z zaokrąglenia, +{norm.overtimeHours}h nadgodzin) | Suma stacji: {norm.totalStationHours}h ({norm.totalStationShifts} zmian)
                   </p>
                 </div>
                 <button
                   onClick={() => setIsWorkersOpen(true)}
-                  className="rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors"
+                  className="rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Edytuj lub dodaj pracowników
                 </button>
@@ -464,15 +472,22 @@ export default function App() {
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-bold text-slate-900">{w.name}</span>
-                      {w.isPodjazd ? (
-                        <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                          Podjazd
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={`rounded px-2 py-0.5 text-[10px] font-bold ${
+                            w.contractType === 'uop'
+                              ? 'bg-blue-100 text-blue-900'
+                              : 'bg-slate-200 text-slate-800'
+                          }`}
+                        >
+                          {w.contractType === 'uop' ? 'Umowa o pracę' : 'Zlecenie (UZ)'}
                         </span>
-                      ) : (
-                        <span className="rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">
-                          Główny
-                        </span>
-                      )}
+                        {w.isPodjazd && (
+                          <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                            Podjazd
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                       <div>
@@ -490,8 +505,10 @@ export default function App() {
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-500">Docelowe zmiany: </span>
-                        <span className="font-bold font-mono text-amber-700">{w.maxShifts}</span>
+                        <span className="text-slate-500">Docelowo zmian: </span>
+                        <span className="font-bold font-mono text-blue-900">
+                          {w.maxShifts} ({ (w.maxShifts || 0) * (w.isPodjazd ? 8 : 12) }h)
+                        </span>
                       </div>
                     </div>
                   </div>

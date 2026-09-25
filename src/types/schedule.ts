@@ -1,14 +1,16 @@
+export type ContractType = 'uop' | 'uz'; // 'uop' = Umowa o pracę (obowiązuje norma), 'uz' = Umowa zlecenie (brak normy)
+
 export interface Worker {
   id: string;
   name: string;
-  oldVacation: number;      // Zaległy urlop (dni)
-  newVacation: number;      // Bieżący urlop (dni, standardowo 26)
-  nightPref: number;        // Preferencja nocy: 0% = tylko dzień, 100% = tylko noc, 50% = równe
-  experience: number;       // Poziom doświadczenia: 1 (stażysta) do 10 (starszy kierownik zmiany)
-  maxShifts: number;        // Docelowa liczba zmian w miesiącu
-  isPodjazd: boolean;       // Pracownik podjazdowy (obsługa dystrybutorów, nie wlicza się do głównej obsady kasy)
-  contractType?: 'full_time' | 'part_time'; // 1/1 etatu, 1/2 etatu itp.
-  targetHours?: number;     // Opcjonalne docelowe godziny
+  contractType: ContractType; // Umowa o pracę / Umowa zlecenie
+  oldVacation: number;        // Zaległy urlop (dni)
+  newVacation: number;        // Bieżący urlop (dni, standardowo 26)
+  nightPref: number;          // Preferencja nocy: 0% = tylko dzień, 100% = tylko noc, 50% = równe
+  experience: number;         // Poziom doświadczenia: 1 (stażysta) do 10 (starszy kierownik zmiany)
+  maxShifts: number;          // Docelowa liczba zmian w miesiącu
+  isPodjazd: boolean;         // Pracownik podjazdowy (obsługa dystrybutorów, nie wlicza się do głównej obsady kasy/stacji)
+  targetHours?: number;       // Opcjonalne docelowe godziny
 }
 
 export type ShiftCode = 'D' | 'N' | 'P' | 'U' | '*' | '';

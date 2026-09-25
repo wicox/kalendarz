@@ -1,12 +1,17 @@
 import React from 'react';
-import { Calendar, Users, BarChart3, AlertCircle, Printer, Download, Sparkles } from 'lucide-react';
+import { Calendar, Users, BarChart3, AlertCircle, Printer, Sparkles, Clock, CheckCircle2 } from 'lucide-react';
 import { POLISH_MONTHS } from '../utils/calendar';
 
 interface HeaderProps {
   currentDate: Date;
   workNormHours: number;
+  shiftsRaw: number;
+  requiredShiftsCeil: number;
+  overtimeHours: number;
+  totalStationHours: number;
+  totalStationShifts: number;
+  totalConfiguredHours: number;
   totalConfiguredShifts: number;
-  totalRequiredShifts: number;
   activeTab: 'schedule' | 'stats' | 'audit' | 'workers';
   onTabChange: (tab: 'schedule' | 'stats' | 'audit' | 'workers') => void;
   conflictCount: number;
@@ -17,8 +22,13 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentDate,
   workNormHours,
+  shiftsRaw,
+  requiredShiftsCeil,
+  overtimeHours,
+  totalStationHours,
+  totalStationShifts,
+  totalConfiguredHours,
   totalConfiguredShifts,
-  totalRequiredShifts,
   activeTab,
   onTabChange,
   conflictCount,
@@ -27,7 +37,8 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const monthName = POLISH_MONTHS[currentDate.getMonth()];
   const year = currentDate.getFullYear();
-  const shiftsMatch = totalConfiguredShifts === totalRequiredShifts;
+  const hoursMatch = totalConfiguredHours === totalStationHours;
+  const hoursDiff = totalConfiguredHours - totalStationHours;
 
   return (
     <header className="border-b border-slate-200 bg-white shadow-xs">
@@ -52,33 +63,47 @@ export const Header: React.FC<HeaderProps> = ({
                 {monthName} {year}
               </span>
               <span>·</span>
-              <span>Obsada ciągła 4×12h</span>
+              <span>Obsada ciągła 4×12h (48h/dobę)</span>
             </div>
           </div>
         </div>
 
         {/* Legal & Shift Norm Indicators */}
-        <div className="hidden lg:flex items-center gap-4 text-xs">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">
-            <span className="text-slate-500">Norma KP: </span>
+        <div className="hidden lg:flex items-center gap-3 text-xs">
+          {/* Norma Miesięczna */}
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5" title="Norma czasu pracy wg art. 130 Kodeksu Pracy">
+            <span className="text-slate-500">Norma m-ca: </span>
             <span className="font-mono font-bold text-slate-900">{workNormHours}h</span>
-            <span className="text-slate-400"> (art. 130)</span>
           </div>
+
+          {/* Ilość zmian wynikających z normy */}
+          <div className="rounded-lg border border-blue-200 bg-blue-50/70 px-3 py-1.5 text-blue-950" title={`${workNormHours}h ÷ 12h = ${shiftsRaw} zmian -> zaokrąglenie do ${requiredShiftsCeil} zmian (generuje ${overtimeHours}h nadgodzin)`}>
+            <span className="text-blue-700 font-medium">Norma na pracownika: </span>
+            <span className="font-mono font-black text-blue-900">{requiredShiftsCeil} zmian</span>
+            <span className="text-slate-500 text-[11px] ml-1">
+              ({shiftsRaw} zm. {overtimeHours > 0 ? `+${overtimeHours}h nadgodz.` : ''})
+            </span>
+          </div>
+
+          {/* Łączna ilość godzin stacji */}
           <div
             className={`rounded-lg border px-3 py-1.5 transition-colors ${
-              shiftsMatch
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                : 'border-amber-200 bg-amber-50 text-amber-900'
+              hoursMatch
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-950'
+                : 'border-amber-300 bg-amber-50 text-amber-950'
             }`}
+            title={`Zapotrzebowanie stacji: ${totalStationShifts} zmian (48h/dobę) = ${totalStationHours}h`}
           >
-            <span className="text-slate-500">Suma zmian zespołu: </span>
-            <span className="font-mono font-bold">{totalConfiguredShifts}</span>
-            <span className="text-slate-500"> / wymagane: </span>
-            <span className="font-mono font-bold">{totalRequiredShifts}</span>
-            {!shiftsMatch && (
-              <span className="ml-1 text-xs font-bold text-amber-600">
-                ({totalConfiguredShifts - totalRequiredShifts > 0 ? '+' : ''}
-                {totalConfiguredShifts - totalRequiredShifts})
+            <span className="text-slate-600">Suma stacji: </span>
+            <span className="font-mono font-black">{totalConfiguredHours}h</span>
+            <span className="text-slate-500"> / {totalStationHours}h</span>
+            {hoursMatch ? (
+              <span className="ml-1.5 inline-flex items-center text-emerald-700 font-bold">
+                <CheckCircle2 className="h-3.5 w-3.5 mr-0.5 inline" /> 100%
+              </span>
+            ) : (
+              <span className="ml-1.5 font-mono font-bold text-amber-800 text-[11px]">
+                ({hoursDiff > 0 ? `+${hoursDiff}` : hoursDiff}h)
               </span>
             )}
           </div>
@@ -88,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onOpenAutoFill}
-            className="flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-slate-950 shadow-xs hover:bg-amber-400 active:bg-amber-600 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-slate-950 shadow-xs hover:bg-amber-400 active:bg-amber-600 transition-colors cursor-pointer"
           >
             <Sparkles className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Auto-wypełnienie</span>
@@ -97,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={onPrint}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer"
             title="Drukuj grafik (A4 poziomo)"
           >
             <Printer className="h-3.5 w-3.5 text-slate-500" />
@@ -110,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="mx-auto flex max-w-(--breakpoint-2xl) items-center gap-1 px-4 sm:px-6">
         <button
           onClick={() => onTabChange('schedule')}
-          className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
+          className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
             activeTab === 'schedule'
               ? 'border-red-600 text-red-600'
               : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900'
@@ -122,7 +147,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <button
           onClick={() => onTabChange('workers')}
-          className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
+          className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
             activeTab === 'workers'
               ? 'border-red-600 text-red-600'
               : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900'
@@ -134,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <button
           onClick={() => onTabChange('stats')}
-          className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
+          className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
             activeTab === 'stats'
               ? 'border-red-600 text-red-600'
               : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900'
@@ -146,7 +171,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <button
           onClick={() => onTabChange('audit')}
-          className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
+          className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
             activeTab === 'audit'
               ? 'border-red-600 text-red-600'
               : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900'

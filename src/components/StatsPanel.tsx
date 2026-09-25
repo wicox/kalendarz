@@ -78,12 +78,14 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
     }
 
     const totalHours = dayHours + nightHours;
+    const isUoP = w.contractType === 'uop';
     const hoursDelta = totalHours - normInfo.hours;
     const nightRatio =
       shiftsCount > 0 ? Math.round((nightHours / (dayHours + nightHours)) * 100) : 0;
 
     return {
       worker: w,
+      isUoP,
       dayHours,
       nightHours,
       totalHours,
@@ -98,8 +100,13 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
     };
   });
 
-  const totalStationHours = workerStats.reduce((acc, s) => acc + s.totalHours, 0);
-  const totalStationShifts = workerStats.reduce((acc, s) => acc + s.shiftsCount, 0);
+  // Stacja - godziny główne bez podjazdu
+  const mainStats = workerStats.filter((s) => !s.worker.isPodjazd);
+  const stationMainHours = mainStats.reduce((acc, s) => acc + s.totalHours, 0);
+  const stationMainShifts = mainStats.reduce((acc, s) => acc + s.shiftsCount, 0);
+
+  const podjazdStats = workerStats.filter((s) => s.worker.isPodjazd);
+  const podjazdTotalHours = podjazdStats.reduce((acc, s) => acc + s.totalHours, 0);
 
   return (
     <div className="mx-auto max-w-(--breakpoint-2xl) p-4 sm:p-6">
@@ -116,36 +123,36 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
               ({normInfo.workingDays} dni roboczych)
             </span>
           </div>
-          <div className="mt-1 text-[11px] text-slate-400">
-            Odpowiada ok. {normInfo.shifts12hEquivalent} zmianom po 12h
+          <div className="mt-1 text-[11px] text-slate-500">
+            {normInfo.shiftsRaw} zmian 12h &rarr; zaokrąglenie do <strong>{normInfo.requiredShiftsCeil} zmian</strong> (+{normInfo.overtimeHours}h nadgodzin)
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
             <BarChart3 className="h-4 w-4 text-emerald-600" />
-            <span>Łączne Godziny Pracy Zespołu</span>
+            <span>Godziny Stacji (Obsada 24/7)</span>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-black text-slate-900">{totalStationHours}h</span>
-            <span className="text-xs text-slate-500">w {totalStationShifts} zmianach</span>
+            <span className="font-mono text-2xl font-black text-slate-900">{stationMainHours}h</span>
+            <span className="text-xs text-slate-500">/ {normInfo.totalStationHours}h wymagane</span>
           </div>
-          <div className="mt-1 text-[11px] text-slate-400">
-            Obsługa ciągła stacji (24/7)
+          <div className="mt-1 text-[11px] text-slate-500">
+            {stationMainShifts} zmian na kasie (bez podjazdu: +{podjazdTotalHours}h)
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
             <Moon className="h-4 w-4 text-indigo-600" />
-            <span>Godziny Nocne (Dodatek Nocny)</span>
+            <span>Godziny Nocne Stacji</span>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="font-mono text-2xl font-black text-indigo-900">
-              {workerStats.reduce((acc, s) => acc + s.nightHours, 0)}h
+              {mainStats.reduce((acc, s) => acc + s.nightHours, 0)}h
             </span>
             <span className="text-xs text-slate-500">
-              ({Math.round((workerStats.reduce((acc, s) => acc + s.nightHours, 0) / Math.max(1, totalStationHours)) * 100)}%)
+              ({Math.round((mainStats.reduce((acc, s) => acc + s.nightHours, 0) / Math.max(1, stationMainHours)) * 100)}%)
             </span>
           </div>
           <div className="mt-1 text-[11px] text-slate-400">
@@ -156,11 +163,11 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
             <Calendar className="h-4 w-4 text-amber-600" />
-            <span>Godziny Weekendowe i Świąteczne</span>
+            <span>Godziny Weekendowe i Święta</span>
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="font-mono text-2xl font-black text-amber-900">
-              {workerStats.reduce((acc, s) => acc + s.weekendHours, 0)}h
+              {mainStats.reduce((acc, s) => acc + s.weekendHours, 0)}h
             </span>
           </div>
           <div className="mt-1 text-[11px] text-slate-400">
@@ -176,7 +183,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
             Zestawienie Indywidualne Czasu Pracy - {POLISH_MONTHS[month]} {year}
           </h3>
           <p className="text-xs text-slate-500">
-            Szczegółowy bilans godzin, dodatków nocnych i odchyleń od normy kodeksowej
+            Szczegółowy bilans godzin, dodatków nocnych, umów i odchyleń od normy kodeksowej
           </p>
         </div>
 
@@ -185,8 +192,9 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
             <thead className="border-b border-slate-200 bg-slate-100 font-bold text-slate-700">
               <tr>
                 <th className="px-4 py-2.5">Pracownik</th>
-                <th className="px-2 py-2.5 text-center">Stanowisko</th>
-                <th className="px-3 py-2.5 text-right">Zmiany</th>
+                <th className="px-2 py-2.5 text-center">Umowa</th>
+                <th className="px-2 py-2.5 text-center">Rola</th>
+                <th className="px-3 py-2.5 text-right font-mono">Zmiany</th>
                 <th className="px-3 py-2.5 text-right font-mono">D (h)</th>
                 <th className="px-3 py-2.5 text-right font-mono">N (h)</th>
                 <th className="px-3 py-2.5 text-right font-mono font-black">Suma (h)</th>
@@ -199,6 +207,17 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
               {workerStats.map((item) => (
                 <tr key={item.worker.name} className="hover:bg-slate-50/80 transition-colors">
                   <td className="px-4 py-2 font-bold text-slate-900">{item.worker.name}</td>
+                  <td className="px-2 py-2 text-center">
+                    <span
+                      className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        item.isUoP
+                          ? 'bg-blue-100 text-blue-900'
+                          : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      {item.isUoP ? 'Umowa o pracę' : 'Zlecenie (UZ)'}
+                    </span>
+                  </td>
                   <td className="px-2 py-2 text-center">
                     {item.worker.isPodjazd ? (
                       <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
@@ -217,12 +236,16 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
                     {item.totalHours}h
                   </td>
                   <td className="px-3 py-2 text-right font-mono">
-                    {item.hoursDelta === 0 ? (
-                      <span className="font-semibold text-emerald-600">0h (w normie)</span>
+                    {!item.isUoP ? (
+                      <span className="text-slate-400">brak normy (UZ)</span>
+                    ) : item.totalHours === normInfo.hours ? (
+                      <span className="font-bold text-emerald-600">Dokładnie norma (0h)</span>
+                    ) : item.totalHours === normInfo.requiredShiftsCeil * 12 ? (
+                      <span className="font-bold text-blue-700">+{normInfo.overtimeHours}h (pełne zmiany)</span>
                     ) : item.hoursDelta > 0 ? (
                       <span className="font-bold text-amber-700">+{item.hoursDelta}h</span>
                     ) : (
-                      <span className="font-medium text-slate-500">{item.hoursDelta}h</span>
+                      <span className="font-bold text-red-600">{item.hoursDelta}h</span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-center font-mono">

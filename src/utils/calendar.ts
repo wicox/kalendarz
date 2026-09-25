@@ -92,11 +92,21 @@ export function getPolishHolidays(year: number): Record<string, string> {
  * 1. Mnoży się 40 godzin przez liczbę pełnych tygodni przypadających w okresie rozliczeniowym.
  * 2. Dodaje się do otrzymanej liczby godzin iloczyn 8 godzin i liczby dni pozostałych do końca okresu (od poniedziałku do piątku).
  * 3. Każde święto przypadające w okresie rozliczeniowym w innym dniu niż niedziela obniża wymiar czasu pracy o 8 godzin.
+ *
+ * Dodatkowo oblicza:
+ * - standardową liczbę zmian 12h zaokrągloną w górę: Math.ceil(hours / 12)
+ * - surowy ułamek zmian (np. 14.66)
+ * - wygenerowane nadgodziny wynikające z zaokrąglenia w górę (np. 15 * 12 - 176 = 4h nadgodzin)
+ * - łączną liczbę godzin stacji: daysInMonth * 48h
  */
 export function calculateWorkNorm(year: number, month: number): {
   hours: number;
   workingDays: number;
-  shifts12hEquivalent: number;
+  shiftsRaw: number;
+  requiredShiftsCeil: number;
+  overtimeHours: number;
+  totalStationHours: number;
+  totalStationShifts: number;
   holidaysOnWorkingDaysOrSaturday: number;
 } {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -125,12 +135,22 @@ export function calculateWorkNorm(year: number, month: number): {
   }
 
   const hours = (workingDaysCount - holidaysDeductibleCount) * 8;
-  const shifts12hEquivalent = Math.round(hours / 12);
+  const shiftsRaw = hours > 0 ? Number((hours / 12).toFixed(2)) : 0;
+  const requiredShiftsCeil = Math.ceil(hours / 12);
+  const overtimeHours = requiredShiftsCeil * 12 - hours;
+
+  // Stacja pracuje 24h/dobę, każda doba to 4 osoby x 12h = 48h
+  const totalStationHours = daysInMonth * 48;
+  const totalStationShifts = daysInMonth * 4;
 
   return {
     hours,
     workingDays: workingDaysCount - holidaysDeductibleCount,
-    shifts12hEquivalent,
+    shiftsRaw,
+    requiredShiftsCeil,
+    overtimeHours,
+    totalStationHours,
+    totalStationShifts,
     holidaysOnWorkingDaysOrSaturday: holidaysDeductibleCount,
   };
 }
@@ -164,7 +184,6 @@ export function getDefaultTradingSundays(year: number): Record<string, boolean> 
   trading[formatDateKey(palmSunday.getFullYear(), palmSunday.getMonth(), palmSunday.getDate())] = true;
 
   // Dwie niedziele przed Bożym Narodzeniem
-  const dec24 = new Date(year, 11, 24);
   let sundayCounter = 0;
   for (let d = 23; d >= 1; d--) {
     const testDate = new Date(year, 11, d);
