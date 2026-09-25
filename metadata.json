@@ -1,0 +1,6 @@
+{
+  "name": "ORLEN - System Planowania Grafiku Pracy",
+  "description": "Zaawansowany system planowania zmian pracowniczych 24/7 z automatycznym algorytmem optymalizacji, normami kodeksu pracy i ewidencją urlopów.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
