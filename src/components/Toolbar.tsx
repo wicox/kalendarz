@@ -12,8 +12,10 @@ import {
   Users,
   Printer,
   FileCode,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { POLISH_MONTHS } from '../utils/calendar';
+import { ExportActionType } from './PrintSettingsModal';
 
 interface ToolbarProps {
   currentDate: Date;
@@ -25,10 +27,8 @@ interface ToolbarProps {
   onClearMonth: () => void;
   onExportJson: () => void;
   onImportJson: (file: File) => void;
-  onExportExcel: () => void;
-  onExportHtml: () => void;
+  onOpenExportModal: (action: ExportActionType) => void;
   onOpenWorkers: () => void;
-  onOpenPrintModal: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -41,10 +41,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onClearMonth,
   onExportJson,
   onImportJson,
-  onExportExcel,
-  onExportHtml,
+  onOpenExportModal,
   onOpenWorkers,
-  onOpenPrintModal,
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -140,41 +138,51 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <span className="hidden sm:inline">Pracownicy</span>
           </button>
 
-          <button
-            onClick={onOpenPrintModal}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer"
-            title="Wybierz opcje i wydrukuj grafik"
-          >
-            <Printer className="h-3.5 w-3.5 text-slate-600" />
-            <span className="hidden sm:inline">Opcje Wydruku</span>
-            <span className="sm:hidden">Druk</span>
-          </button>
-
           <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
 
-          {/* Export Group: Excel / HTML / JSON */}
+          {/* Export & Print Controls with Pre-Export Column Selection */}
           <button
-            onClick={onExportExcel}
-            className="flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-900 hover:bg-emerald-100 transition-colors cursor-pointer"
-            title="Pobierz plik Excel ze stylami i kolorami"
+            onClick={() => onOpenExportModal('print')}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors cursor-pointer"
+            title="Wybierz opcje kolumn i wydrukuj grafik (A4 Poziomo)"
           >
-            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-700" />
-            <span>Excel (.xls)</span>
+            <Printer className="h-3.5 w-3.5 text-red-600" />
+            <span>Drukuj</span>
           </button>
 
           <button
-            onClick={onExportHtml}
+            onClick={() => onOpenExportModal('jpg')}
+            className="flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-950 hover:bg-amber-100 transition-colors cursor-pointer"
+            title="Zapisz grafik jako obraz JPG z wyborem kolumn"
+          >
+            <ImageIcon className="h-3.5 w-3.5 text-amber-600" />
+            <span>JPG</span>
+          </button>
+
+          <button
+            onClick={() => onOpenExportModal('excel')}
+            className="flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-900 hover:bg-emerald-100 transition-colors cursor-pointer"
+            title="Eksportuj do Excela (.xls) - układ pionowy z wyborem kolumn"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-700" />
+            <span>Excel</span>
+          </button>
+
+          <button
+            onClick={() => onOpenExportModal('html')}
             className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-            title="Pobierz samodzielną stronę HTML z grafikiem"
+            title="Pobierz stronę HTML z grafikiem i opcjami druku"
           >
             <FileCode className="h-3.5 w-3.5 text-purple-600" />
             <span className="hidden lg:inline">HTML</span>
           </button>
 
+          <div className="h-5 w-px bg-slate-200 mx-1 hidden lg:block" />
+
           <button
             onClick={onExportJson}
             className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-            title="Zapisz kopię zapasową (JSON)"
+            title="Zapisz kopię zapasową danych (JSON)"
           >
             <Download className="h-3.5 w-3.5 text-blue-600" />
             <span className="hidden lg:inline">Zapisz</span>

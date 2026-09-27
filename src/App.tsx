@@ -6,7 +6,7 @@ import { ShiftModal } from './components/ShiftModal';
 import { AutoFillModal } from './components/AutoFillModal';
 import { WorkerManagerModal } from './components/WorkerManagerModal';
 import { BatchAbsenceModal } from './components/BatchAbsenceModal';
-import { PrintSettingsModal } from './components/PrintSettingsModal';
+import { PrintSettingsModal, ExportActionType } from './components/PrintSettingsModal';
 import { StatsPanel } from './components/StatsPanel';
 import { AuditPanel } from './components/AuditPanel';
 
@@ -24,6 +24,7 @@ import {
   exportScheduleToJson,
   exportScheduleToExcel,
   exportScheduleToHtml,
+  exportScheduleToJpg,
 } from './utils/exportUtils';
 
 const DEFAULT_WORKERS: Worker[] = [
@@ -393,8 +394,34 @@ export default function App() {
     reader.readAsText(file);
   };
 
+  const [exportModalAction, setExportModalAction] = useState<ExportActionType>('print');
+
+  const handleOpenExportModal = (action: ExportActionType = 'print') => {
+    setExportModalAction(action);
+    setIsPrintModalOpen(true);
+  };
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleExportJpg = async () => {
+    try {
+      await exportScheduleToJpg(year, month, 'schedule-table-capture-root');
+      showToast('Pomyślnie wyeksportowano grafik jako obraz JPG!', 'success');
+    } catch (err: any) {
+      showToast(err?.message || 'Błąd podczas generowania obrazu JPG', 'error');
+    }
+  };
+
+  const handleExportExcel = () => {
+    exportScheduleToExcel(workers, scheduleData, year, month, tradingSundays, printSettings);
+    showToast('Pobrano arkusz Excel (.xls)', 'success');
+  };
+
+  const handleExportHtml = () => {
+    exportScheduleToHtml(workers, scheduleData, year, month, tradingSundays, printSettings);
+    showToast('Pobrano stronę HTML z grafikiem', 'success');
   };
 
   return (
@@ -430,7 +457,7 @@ export default function App() {
         onTabChange={setActiveTab}
         conflictCount={conflicts.filter((c) => c.severity === 'error').length}
         onOpenAutoFill={() => setIsAutoFillOpen(true)}
-        onPrint={() => setIsPrintModalOpen(true)}
+        onPrint={() => handleOpenExportModal('print')}
       />
 
       {/* Action Toolbar */}
@@ -447,10 +474,8 @@ export default function App() {
             exportScheduleToJson(workers, scheduleData, tradingSundays, year, month)
           }
           onImportJson={handleImportJson}
-          onExportExcel={() => exportScheduleToExcel(workers, scheduleData, year, month, tradingSundays)}
-          onExportHtml={() => exportScheduleToHtml(workers, scheduleData, year, month, tradingSundays)}
+          onOpenExportModal={handleOpenExportModal}
           onOpenWorkers={() => setIsWorkersOpen(true)}
-          onOpenPrintModal={() => setIsPrintModalOpen(true)}
         />
       </div>
 
@@ -638,7 +663,11 @@ export default function App() {
         isOpen={isPrintModalOpen}
         settings={printSettings}
         onSettingsChange={setPrintSettings}
+        defaultAction={exportModalAction}
         onPrint={handlePrint}
+        onExportJpg={handleExportJpg}
+        onExportExcel={handleExportExcel}
+        onExportHtml={handleExportHtml}
         onClose={() => setIsPrintModalOpen(false)}
       />
     </div>
