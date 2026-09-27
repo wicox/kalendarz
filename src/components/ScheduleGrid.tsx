@@ -279,7 +279,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
                   const partners = getPartnersOnShift(dateStr, worker.name, parsed.code);
 
-                  return (
+                    return (
                     <td
                       key={day}
                       onClick={() => onOpenTimeModal(worker.name, dateStr)}
@@ -292,33 +292,33 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                           : 'Kliknij, aby wybrać zmianę'
                       }
                     >
-                      <div className="relative flex h-[58px] min-h-[58px] w-full flex-col items-center justify-center p-0.5 select-none">
+                      <div className="relative flex h-[42px] min-h-[42px] w-full flex-col items-center justify-center p-0.5 select-none">
                         {/* URLOP - Ikonka palmy */}
                         {parsed.code === 'U' && (
-                          <div className="flex h-full w-full flex-col items-center justify-center rounded bg-emerald-500 text-white shadow-2xs">
-                            <Palmtree className="h-4 w-4 text-emerald-100" />
-                            <span className="text-[10px] font-black tracking-wider leading-none mt-0.5">U</span>
-                            <span className="text-[7.5px] font-bold text-emerald-100 opacity-90 leading-none">URLOP</span>
+                          <div className="flex h-full w-full flex-col items-center justify-center rounded bg-emerald-500 text-white shadow-2xs py-0.5">
+                            <Palmtree className="h-3.5 w-3.5 text-emerald-100" />
+                            <span className="shift-code text-[9px] font-black tracking-wider leading-none mt-0.5">U</span>
+                            <span className="text-[6.5px] font-bold text-emerald-100 opacity-90 leading-none">URLOP</span>
                           </div>
                         )}
 
                         {/* DZIEŃ WOLNY - Ikonka filiżanki */}
                         {parsed.code === '*' && (
-                          <div className="flex h-full w-full flex-col items-center justify-center rounded border border-amber-300 bg-amber-100 text-amber-950 shadow-2xs">
-                            <Coffee className="h-4 w-4 text-amber-800" />
-                            <span className="text-[9px] font-black text-amber-900 leading-none mt-0.5">*</span>
-                            <span className="text-[7.5px] font-bold text-amber-800 opacity-90 leading-none">WOLNE</span>
+                          <div className="flex h-full w-full flex-col items-center justify-center rounded border border-amber-300 bg-amber-100 text-amber-950 shadow-2xs py-0.5">
+                            <Coffee className="h-3.5 w-3.5 text-amber-800" />
+                            <span className="shift-code text-[8.5px] font-black text-amber-900 leading-none mt-0.5">*</span>
+                            <span className="text-[6.5px] font-bold text-amber-800 opacity-90 leading-none">WOLNE</span>
                           </div>
                         )}
 
                         {/* ZMIANA DZIENNA (D) */}
                         {parsed.code === 'D' && (
                           <div className="flex h-full w-full flex-col items-center justify-center rounded border border-blue-200 bg-blue-50 text-blue-900 shadow-2xs py-0.5">
-                            <span className="text-xs font-black text-blue-800 leading-none">D</span>
-                            <span className="font-mono text-[9px] font-bold text-blue-600 leading-tight mt-0.5">
+                            <span className="shift-code text-[11px] font-black text-blue-800 leading-none">D</span>
+                            <span className="shift-time font-mono text-[8.5px] font-bold text-blue-600 leading-none mt-0.5">
                               {parsed.startTime || '06:00'}
                             </span>
-                            <span className="font-mono text-[9px] font-bold text-blue-600 leading-tight">
+                            <span className="shift-time font-mono text-[8.5px] font-bold text-blue-600 leading-none mt-0.5">
                               {parsed.endTime || '18:00'}
                             </span>
                           </div>
@@ -327,11 +327,11 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                         {/* ZMIANA NOCNA (N) - Pastelowy, lekko ciemniejszy od dnia (D), idealny do wydruku */}
                         {parsed.code === 'N' && (
                           <div className="flex h-full w-full flex-col items-center justify-center rounded border border-indigo-200 bg-indigo-100/90 text-indigo-950 shadow-2xs py-0.5">
-                            <span className="text-xs font-black text-indigo-950 leading-none">N</span>
-                            <span className="font-mono text-[9px] font-bold text-indigo-900 leading-tight mt-0.5">
+                            <span className="shift-code text-[11px] font-black text-indigo-950 leading-none">N</span>
+                            <span className="shift-time font-mono text-[8.5px] font-bold text-indigo-900 leading-none mt-0.5">
                               {parsed.startTime || '18:00'}
                             </span>
-                            <span className="font-mono text-[9px] font-bold text-indigo-900 leading-tight">
+                            <span className="shift-time font-mono text-[8.5px] font-bold text-indigo-900 leading-none mt-0.5">
                               {parsed.endTime || '06:00'}
                             </span>
                           </div>
@@ -340,11 +340,11 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                         {/* PODJAZD (P) */}
                         {parsed.code === 'P' && (
                           <div className="flex h-full w-full flex-col items-center justify-center rounded border border-emerald-200 bg-emerald-50 text-emerald-900 shadow-2xs py-0.5">
-                            <span className="text-xs font-black text-emerald-800 leading-none">P</span>
-                            <span className="font-mono text-[9px] font-bold text-emerald-600 leading-tight mt-0.5">
+                            <span className="shift-code text-[11px] font-black text-emerald-800 leading-none">P</span>
+                            <span className="shift-time font-mono text-[8.5px] font-bold text-emerald-600 leading-none mt-0.5">
                               {parsed.startTime || '08:00'}
                             </span>
-                            <span className="font-mono text-[9px] font-bold text-emerald-600 leading-tight">
+                            <span className="shift-time font-mono text-[8.5px] font-bold text-emerald-600 leading-none mt-0.5">
                               {parsed.endTime || '16:00'}
                             </span>
                           </div>
@@ -353,14 +353,14 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                         {/* INNA ZMIANA NIESTANDARDOWA */}
                         {parsed.code && !['U', '*', 'D', 'N', 'P'].includes(parsed.code) && (
                           <div className="flex h-full w-full flex-col items-center justify-center rounded border border-slate-300 bg-slate-100 text-slate-800 shadow-2xs py-0.5">
-                            <span className="text-xs font-black leading-none">{parsed.code}</span>
+                            <span className="shift-code text-xs font-black leading-none">{parsed.code}</span>
                             {parsed.startTime && (
-                              <span className="font-mono text-[9px] font-bold text-slate-600 leading-tight mt-0.5">
+                              <span className="shift-time font-mono text-[8.5px] font-bold text-slate-600 leading-none mt-0.5">
                                 {parsed.startTime}
                               </span>
                             )}
                             {parsed.endTime && (
-                              <span className="font-mono text-[9px] font-bold text-slate-600 leading-tight">
+                              <span className="shift-time font-mono text-[8.5px] font-bold text-slate-600 leading-none mt-0.5">
                                 {parsed.endTime}
                               </span>
                             )}
