@@ -19,9 +19,9 @@ interface PrintSettingsModalProps {
   defaultAction?: ExportActionType;
   onPrint?: () => void;
   onConfirmPrint?: () => void;
-  onExportJpg?: () => Promise<void> | void;
-  onExportExcel?: () => void;
-  onExportHtml?: () => void;
+  onExportJpg?: (settings: PrintSettings) => Promise<void> | void;
+  onExportExcel?: (settings: PrintSettings) => void;
+  onExportHtml?: (settings: PrintSettings) => void;
   onClose: () => void;
 }
 
@@ -68,14 +68,14 @@ export const PrintSettingsModal: React.FC<PrintSettingsModalProps> = ({
         }, 120);
       } else if (action === 'jpg') {
         if (onExportJpg) {
-          await onExportJpg();
+          await onExportJpg(settings);
         }
         onClose();
       } else if (action === 'excel') {
-        if (onExportExcel) onExportExcel();
+        if (onExportExcel) onExportExcel(settings);
         onClose();
       } else if (action === 'html') {
-        if (onExportHtml) onExportHtml();
+        if (onExportHtml) onExportHtml(settings);
         onClose();
       }
     } catch (err) {

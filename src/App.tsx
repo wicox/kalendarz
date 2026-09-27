@@ -405,22 +405,22 @@ export default function App() {
     window.print();
   };
 
-  const handleExportJpg = async () => {
+  const handleExportJpg = async (exportSettings: PrintSettings = printSettings) => {
     try {
-      await exportScheduleToJpg(year, month, 'schedule-table-capture-root');
+      await exportScheduleToJpg(year, month, exportSettings, 'schedule-table-capture-root');
       showToast('Pomyślnie wyeksportowano grafik jako obraz JPG!', 'success');
     } catch (err: any) {
       showToast(err?.message || 'Błąd podczas generowania obrazu JPG', 'error');
     }
   };
 
-  const handleExportExcel = () => {
-    exportScheduleToExcel(workers, scheduleData, year, month, tradingSundays, printSettings);
+  const handleExportExcel = (exportSettings: PrintSettings = printSettings) => {
+    exportScheduleToExcel(workers, scheduleData, year, month, tradingSundays, exportSettings);
     showToast('Pobrano arkusz Excel (.xls)', 'success');
   };
 
-  const handleExportHtml = () => {
-    exportScheduleToHtml(workers, scheduleData, year, month, tradingSundays, printSettings);
+  const handleExportHtml = (exportSettings: PrintSettings = printSettings) => {
+    exportScheduleToHtml(workers, scheduleData, year, month, tradingSundays, exportSettings);
     showToast('Pobrano stronę HTML z grafikiem', 'success');
   };
 

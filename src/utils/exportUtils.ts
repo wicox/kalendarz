@@ -573,10 +573,12 @@ export function exportScheduleToStandaloneHtml(
 
 /**
  * Eksport grafiku do obrazu JPG w wysokiej rozdzielczości (pixelRatio: 2)
+ * Z pełną obsługą ukrywania wybranych kolumn i elementów (urlop, umowa, nazwisko, godziny, zmiany)
  */
 export async function exportScheduleToJpg(
   year: number,
   month: number,
+  settings?: PrintSettings,
   elementId: string = 'schedule-table-capture-root'
 ): Promise<void> {
   const root = document.getElementById(elementId);
@@ -588,14 +590,26 @@ export async function exportScheduleToJpg(
   const prevWidth = root.style.width;
   const prevMaxWidth = root.style.maxWidth;
 
+  const appliedClasses: string[] = ['is-exporting'];
+  if (settings?.showLastName === false) appliedClasses.push('hide-export-lastname');
+  if (settings?.showExperience === false) appliedClasses.push('hide-export-experience');
+  if (settings?.showContractType === false) appliedClasses.push('hide-export-contract');
+  if (settings?.showVacation === false) appliedClasses.push('hide-export-vacation');
+  if (settings?.showDayHours === false) appliedClasses.push('hide-export-dh');
+  if (settings?.showNightHours === false) appliedClasses.push('hide-export-nh');
+  if (settings?.showTotalHours === false) appliedClasses.push('hide-export-sum');
+  if (settings?.showShiftsCount === false) appliedClasses.push('hide-export-shifts');
+
+  root.classList.add(...appliedClasses);
+
   try {
     const scrollWidth = root.scrollWidth;
     root.style.overflow = 'visible';
-    root.style.width = `${Math.max(scrollWidth, 1200)}px`;
+    root.style.width = `${Math.max(scrollWidth, 1100)}px`;
     root.style.maxWidth = 'none';
 
-    // Allow layout to stabilize before snapshot
-    await new Promise((resolve) => setTimeout(resolve, 80));
+    // Oczekiwanie na przeliczenie stylów i layoutu DOM przez przeglądarkę
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     const dataUrl = await toJpeg(root, {
       quality: 0.95,
@@ -605,6 +619,14 @@ export async function exportScheduleToJpg(
         if (node instanceof HTMLElement && node.classList) {
           if (node.classList.contains('no-export')) return false;
           if (node.classList.contains('no-print')) return false;
+          if (settings?.showLastName === false && node.classList.contains('export-lastname')) return false;
+          if (settings?.showExperience === false && node.classList.contains('export-experience')) return false;
+          if (settings?.showContractType === false && node.classList.contains('export-contract')) return false;
+          if (settings?.showVacation === false && node.classList.contains('export-col-vacation')) return false;
+          if (settings?.showDayHours === false && node.classList.contains('export-col-dh')) return false;
+          if (settings?.showNightHours === false && node.classList.contains('export-col-nh')) return false;
+          if (settings?.showTotalHours === false && node.classList.contains('export-col-sum')) return false;
+          if (settings?.showShiftsCount === false && node.classList.contains('export-col-shifts')) return false;
         }
         return true;
       },
@@ -615,6 +637,7 @@ export async function exportScheduleToJpg(
     link.href = dataUrl;
     link.click();
   } finally {
+    root.classList.remove(...appliedClasses);
     root.style.overflow = prevOverflow;
     root.style.width = prevWidth;
     root.style.maxWidth = prevMaxWidth;

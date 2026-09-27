@@ -132,3 +132,23 @@
     position: static !important;
   }
 }
+
+/* Klasy kontrolujące widoczność kolumn i elementów przy eksporcie do JPG */
+.hide-export-vacation .export-col-vacation { display: none !important; }
+.hide-export-contract .export-contract { display: none !important; }
+.hide-export-lastname .export-lastname { display: none !important; }
+.hide-export-experience .export-experience { display: none !important; }
+.hide-export-dh .export-col-dh { display: none !important; }
+.hide-export-nh .export-col-nh { display: none !important; }
+.hide-export-sum .export-col-sum { display: none !important; }
+.hide-export-shifts .export-col-shifts { display: none !important; }
+
+/* Klasa snapshotu JPG - statyczny układ i nagłówek marki */
+.is-exporting .sticky {
+  position: static !important;
+}
+
+.is-exporting .is-exporting-banner {
+  display: flex !important;
+}
+

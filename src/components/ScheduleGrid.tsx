@@ -65,7 +65,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
   return (
     <div id="schedule-table-capture-root" className="w-full bg-white shadow-xs rounded-xl overflow-x-auto">
       {/* Header banner for Print & JPG snapshot capture */}
-      <div className="hidden print:flex items-center justify-between border-b-2 border-red-600 px-3 py-1 mb-1 bg-white">
+      <div className="hidden print:flex is-exporting-banner items-center justify-between border-b-2 border-red-600 px-3 py-1 mb-1 bg-white">
         <div className="text-base font-black tracking-widest text-red-600">ORLEN</div>
         <div className="text-center">
           <div className="text-xs font-black uppercase text-slate-900">Grafik Pracy 24/7</div>
@@ -84,7 +84,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
               Imię i Nazwisko
             </th>
             <th
-              className={`sticky left-44 z-30 w-14 min-w-14 bg-slate-700 px-1 py-1 font-sans text-[10px] font-semibold text-slate-200 ${
+              className={`export-col-vacation sticky left-44 z-30 w-14 min-w-14 bg-slate-700 px-1 py-1 font-sans text-[10px] font-semibold text-slate-200 ${
                 printSettings?.showVacation !== false ? '' : 'print:hidden'
               }`}
               title="Dostępny urlop: Dni pozostałe (Zaległy / Bieżący)"
@@ -148,28 +148,28 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
             {/* Summary Columns */}
             <th
-              className={`w-10 min-w-10 bg-slate-700 px-1 py-1 font-sans text-[10px] font-semibold text-slate-200 ${
+              className={`export-col-dh w-10 min-w-10 bg-slate-700 px-1 py-1 font-sans text-[10px] font-semibold text-slate-200 ${
                 printSettings?.showDayHours !== false ? '' : 'print:hidden'
               }`}
             >
               D (h)
             </th>
             <th
-              className={`w-10 min-w-10 bg-slate-700 px-1 py-1 font-sans text-[10px] font-semibold text-slate-200 ${
+              className={`export-col-nh w-10 min-w-10 bg-slate-700 px-1 py-1 font-sans text-[10px] font-semibold text-slate-200 ${
                 printSettings?.showNightHours !== false ? '' : 'print:hidden'
               }`}
             >
               N (h)
             </th>
             <th
-              className={`w-14 min-w-14 bg-slate-700 px-1 py-1 font-sans text-[10px] font-bold text-slate-100 ${
+              className={`export-col-sum w-14 min-w-14 bg-slate-700 px-1 py-1 font-sans text-[10px] font-bold text-slate-100 ${
                 printSettings?.showTotalHours !== false ? '' : 'print:hidden'
               }`}
             >
               Suma h
             </th>
             <th
-              className={`w-11 min-w-11 bg-slate-900 px-1 py-1 font-sans text-[10px] font-bold text-amber-400 ${
+              className={`export-col-shifts w-11 min-w-11 bg-slate-900 px-1 py-1 font-sans text-[10px] font-bold text-amber-400 ${
                 printSettings?.showShiftsCount !== false ? '' : 'print:hidden'
               }`}
               title="Liczba wykonanych zmian w miesiącu"
@@ -205,7 +205,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                       title={`${worker.name} (Dośw: ${worker.experience}/10, Noc: ${worker.nightPref}%)`}
                     >
                       <span className="font-extrabold">{fName}</span>
-                      <span className={printSettings?.showLastName !== false ? '' : 'print:hidden'}>
+                      <span className={`export-lastname ${printSettings?.showLastName !== false ? '' : 'print:hidden'}`}>
                         {lName ? ` ${lName}` : ''}
                       </span>
                     </div>
@@ -213,7 +213,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                     {/* Dośw, nocki i umowa w jednej zwartej linijce */}
                     <div className="mt-0.5 flex items-center gap-1.5 text-[9px] text-slate-500 font-medium leading-none">
                       <div
-                        className={`flex items-center gap-1 ${
+                        className={`export-experience flex items-center gap-1 ${
                           printSettings?.showExperience !== false ? '' : 'print:hidden'
                         }`}
                       >
@@ -222,7 +222,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                         <span>noc {worker.nightPref}%</span>
                       </div>
 
-                      <div className={printSettings?.showContractType !== false ? '' : 'print:hidden'}>
+                      <div className={`export-contract ${printSettings?.showContractType !== false ? '' : 'print:hidden'}`}>
                         {worker.isPodjazd ? (
                           <span className="rounded bg-emerald-100 px-1 py-0.2 text-[8px] font-bold text-emerald-800">
                             Podjazd
@@ -245,7 +245,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
                 {/* Vacation Balance */}
                 <td
-                  className={`sticky left-44 z-20 border-r border-slate-200 bg-slate-50 px-1 py-0.5 text-center font-sans text-[10px] font-bold text-slate-700 ${
+                  className={`export-col-vacation sticky left-44 z-20 border-r border-slate-200 bg-slate-50 px-1 py-0.5 text-center font-sans text-[10px] font-bold text-slate-700 ${
                     printSettings?.showVacation !== false ? '' : 'print:hidden'
                   }`}
                   title={`Pozostało łącznie: ${vacBal.total} dni urlopu (${vacBal.oldVac} zaległego + ${vacBal.newVac} bieżącego)`}
@@ -429,21 +429,21 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                   return (
                     <>
                       <td
-                        className={`border-r border-slate-200 bg-slate-50/70 px-1 py-0.5 font-mono text-[10.5px] font-semibold text-slate-700 ${
+                        className={`export-col-dh border-r border-slate-200 bg-slate-50/70 px-1 py-0.5 font-mono text-[10.5px] font-semibold text-slate-700 ${
                           printSettings?.showDayHours !== false ? '' : 'print:hidden'
                         }`}
                       >
                         {dayHours}h
                       </td>
                       <td
-                        className={`border-r border-slate-200 bg-slate-50/70 px-1 py-0.5 font-mono text-[10.5px] font-semibold text-slate-700 ${
+                        className={`export-col-nh border-r border-slate-200 bg-slate-50/70 px-1 py-0.5 font-mono text-[10.5px] font-semibold text-slate-700 ${
                           printSettings?.showNightHours !== false ? '' : 'print:hidden'
                         }`}
                       >
                         {nightHours}h
                       </td>
                       <td
-                        className={`border-r border-slate-200 px-1 py-0.5 font-mono text-[10.5px] transition-colors ${sumHoursBgClass} ${
+                        className={`export-col-sum border-r border-slate-200 px-1 py-0.5 font-mono text-[10.5px] transition-colors ${sumHoursBgClass} ${
                           printSettings?.showTotalHours !== false ? '' : 'print:hidden'
                         }`}
                         title={sumHoursTitle}
@@ -451,7 +451,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
                         {totalWorkerHours}h
                       </td>
                       <td
-                        className={`border-r border-slate-200 px-1 py-0.5 font-mono text-[10.5px] font-bold ${
+                        className={`export-col-shifts border-r border-slate-200 px-1 py-0.5 font-mono text-[10.5px] font-bold ${
                           targetMatch
                             ? 'bg-emerald-50 text-emerald-800'
                             : 'bg-amber-50 text-amber-900'
@@ -483,7 +483,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
               </span>
             </td>
             <td
-              className={`sticky left-44 z-20 border-r border-slate-200 bg-slate-200 ${
+              className={`export-col-vacation sticky left-44 z-20 border-r border-slate-200 bg-slate-200 ${
                 printSettings?.showVacation !== false ? '' : 'print:hidden'
               }`}
             ></td>
@@ -531,7 +531,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
             {/* Sub-totals for Day / Night */}
             <td
-              className={`border-r border-slate-200 bg-slate-200 px-1 py-1 font-mono text-[9.5px] font-bold text-slate-700 ${
+              className={`export-col-dh border-r border-slate-200 bg-slate-200 px-1 py-1 font-mono text-[9.5px] font-bold text-slate-700 ${
                 printSettings?.showDayHours !== false ? '' : 'print:hidden'
               }`}
             >
@@ -548,7 +548,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
               h
             </td>
             <td
-              className={`border-r border-slate-200 bg-slate-200 px-1 py-1 font-mono text-[9.5px] font-bold text-slate-700 ${
+              className={`export-col-nh border-r border-slate-200 bg-slate-200 px-1 py-1 font-mono text-[9.5px] font-bold text-slate-700 ${
                 printSettings?.showNightHours !== false ? '' : 'print:hidden'
               }`}
             >
@@ -567,7 +567,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
             {/* TOTAL HOURS COLUMN */}
             <td
-              className={`border-r border-slate-300 px-1 py-1 font-mono text-[11px] font-black transition-colors ${
+              className={`export-col-sum border-r border-slate-300 px-1 py-1 font-mono text-[11px] font-black transition-colors ${
                 grandTotalHours === norm.totalStationHours
                   ? 'bg-emerald-600 text-white ring-2 ring-emerald-400'
                   : 'bg-amber-100 text-amber-950 font-bold'
@@ -582,7 +582,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({
 
             {/* TOTAL SHIFTS COLUMN */}
             <td
-              className={`bg-slate-300 px-1 py-1 font-mono text-[11px] font-black text-slate-900 ${
+              className={`export-col-shifts bg-slate-300 px-1 py-1 font-mono text-[11px] font-black text-slate-900 ${
                 printSettings?.showShiftsCount !== false ? '' : 'print:hidden'
               }`}
               title={`Główne zmiany stacji: ${grandTotalShifts} / wymagane: ${norm.totalStationShifts} | Podjazd: ${podjazdTotalShifts} zm.`}
